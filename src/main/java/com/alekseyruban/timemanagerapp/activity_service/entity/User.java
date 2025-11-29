@@ -3,6 +3,9 @@ package com.alekseyruban.timemanagerapp.activity_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "app_user")
 @Getter
@@ -20,4 +23,11 @@ public class User {
 
     @Column(nullable = false, columnDefinition = "BIGINT DEFAULT 0")
     private Long snapshotVersion = 0L;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Category> categories = new ArrayList<>();
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }
