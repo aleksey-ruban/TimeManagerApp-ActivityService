@@ -223,6 +223,7 @@ public class ActivityOfflineService {
         activity.setIcon(icon);
         activity.setColor(activityColor);
         activity.setVariations(variations);
+        activity.setDeleted(dto.isDeleted());
         Activity finalActivity = activityRepository.save(activity);
 
         user.setSnapshotVersion(newSnapshotVersion);

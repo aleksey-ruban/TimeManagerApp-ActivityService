@@ -6,7 +6,7 @@ import com.alekseyruban.timemanagerapp.activity_service.DTO.category.DeleteCateg
 import com.alekseyruban.timemanagerapp.activity_service.DTO.category.UpdateCategoryDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.response.ApiResponse;
 import com.alekseyruban.timemanagerapp.activity_service.entity.Category;
-import com.alekseyruban.timemanagerapp.activity_service.service.CategoryService;
+import com.alekseyruban.timemanagerapp.activity_service.service.CategoryOnlineService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/activities/category")
 public class CategoryController {
 
-    private final CategoryService categoryService;
+    private final CategoryOnlineService categoryOnlineService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<CategoryDto>> createUserCategory(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody CreateCategoryDto dto
     ) {
-        Category category = categoryService.createUserCategory(userId, dto);
+        Category category = categoryOnlineService.createUserCategory(userId, dto);
         CategoryDto categoryDto = CategoryDto.fromCategory(category);
 
         ApiResponse<CategoryDto> response = new ApiResponse<>("Category created", categoryDto);
@@ -37,7 +37,7 @@ public class CategoryController {
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody UpdateCategoryDto dto
     ) {
-        Category category = categoryService.updateUserCategory(userId, dto);
+        Category category = categoryOnlineService.updateUserCategory(userId, dto);
         CategoryDto categoryDto = CategoryDto.fromCategory(category);
 
         ApiResponse<CategoryDto> response = new ApiResponse<>("Category updated", categoryDto);
@@ -49,7 +49,7 @@ public class CategoryController {
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody DeleteCategoryDto dto
     ) {
-        categoryService.deleteUserCategory(userId, dto);
+        categoryOnlineService.deleteUserCategory(userId, dto);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

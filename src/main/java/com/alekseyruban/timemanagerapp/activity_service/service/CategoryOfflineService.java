@@ -8,20 +8,18 @@ import com.alekseyruban.timemanagerapp.activity_service.entity.User;
 import com.alekseyruban.timemanagerapp.activity_service.exception.ExceptionFactory;
 import com.alekseyruban.timemanagerapp.activity_service.respository.CategoryRepository;
 import com.alekseyruban.timemanagerapp.activity_service.respository.UserRepository;
-import com.alekseyruban.timemanagerapp.activity_service.utils.Locale;
 import com.alekseyruban.timemanagerapp.activity_service.utils.RetryOptimisticLock;
 import com.alekseyruban.timemanagerapp.activity_service.utils.TextValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class CategoryService {
+public class CategoryOfflineService {
 
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
@@ -34,8 +32,9 @@ public class CategoryService {
         User user = userRepository.findByDomainId(userDomainId)
                 .orElseThrow(exceptionFactory::userNotFountException);
 
-        if (categoryRepository.findByUser_DomainIdAndBaseNameAndDeletedFalse(userDomainId, dto.getBaseName()).isPresent()) {
-            throw exceptionFactory.categoryExistsException();
+        Optional<Category> conflictingCategory = categoryRepository.findByUser_DomainIdAndBaseNameAndDeletedFalse(userDomainId, dto.getBaseName());
+        if (conflictingCategory.isPresent()) {
+            return conflictingCategory.get();
         }
 
         if (!textValidator.isValidCategory(dto.getBaseName())) {
@@ -47,7 +46,7 @@ public class CategoryService {
         Category category = Category.builder()
                 .user(user)
                 .baseName(dto.getBaseName())
-                .deleted(false)
+                .deleted(dto.isDeleted())
                 .lastModifiedVersion(newSnapshotVersion)
                 .build();
 
@@ -57,40 +56,13 @@ public class CategoryService {
         return category;
     }
 
-    public List<Category> userCategoriesBetweenVersionsExclusiveLower(Long userDomainId, Long fromVersion, Long toVersion) {
-        userRepository.findByDomainId(userDomainId)
-                .orElseThrow(exceptionFactory::userNotFountException);
-
-        return categoryRepository.findCategoriesByUserAndVersionRangeExclusiveLower(
-                userDomainId,
-                fromVersion,
-                toVersion
-        );
-    }
-
-    public List<Category> globalCategoriesBetweenVersionsExclusiveLower(Long fromVersion, Long toVersion, Locale locale) {
-        List<Category> categories = categoryRepository.findGlobalCategoriesByVersionRangeExclusiveLower(
-                fromVersion,
-                toVersion
-        );
-
-        categories.forEach(category -> {
-            category.getLocales().stream()
-                    .filter(l -> l.getLocale().equalsIgnoreCase(locale.getCode()))
-                    .findFirst()
-                    .ifPresent(l -> category.setBaseName(l.getName()));
-        });
-
-        return categories;
-    }
-
     @RetryOptimisticLock
     @Transactional
     public Category updateUserCategory(Long userDomainId, UpdateCategoryDto dto) {
         User user = userRepository.findByDomainId(userDomainId)
                 .orElseThrow(exceptionFactory::userNotFountException);
 
-        Category category = categoryRepository.findByIdAndDeletedFalse(dto.getId())
+        Category category = categoryRepository.findById(dto.getId())
                 .orElseThrow(exceptionFactory::categoryNotFountException);
 
         if (!Objects.equals(userDomainId, category.getUser().getDomainId())) {
@@ -98,12 +70,12 @@ public class CategoryService {
         }
 
         if (!Objects.equals(dto.getLastModifiedVersion(), category.getLastModifiedVersion())) {
-            throw exceptionFactory.oldVersion();
+            return category;
         }
 
-        Optional<Category> optionalCategory = categoryRepository.findByUser_DomainIdAndBaseNameAndDeletedFalse(userDomainId, dto.getBaseName());
-        if (optionalCategory.isPresent() && !Objects.equals(optionalCategory.get().getId(), dto.getId())) {
-            throw exceptionFactory.categoryExistsException();
+        Optional<Category> conflictingCategory = categoryRepository.findByUser_DomainIdAndBaseNameAndDeletedFalse(userDomainId, dto.getBaseName());
+        if (conflictingCategory.isPresent() && !Objects.equals(conflictingCategory.get().getId(), dto.getId())) {
+            return category;
         }
 
         if (!textValidator.isValidCategory(dto.getBaseName())) {
@@ -114,6 +86,7 @@ public class CategoryService {
 
         category.setBaseName(dto.getBaseName());
         category.setLastModifiedVersion(newSnapshotVersion);
+        category.setDeleted(dto.isDeleted());
         user.setSnapshotVersion(newSnapshotVersion);
 
         categoryRepository.save(category);
@@ -127,7 +100,7 @@ public class CategoryService {
         User user = userRepository.findByDomainId(userDomainId)
                 .orElseThrow(exceptionFactory::userNotFountException);
 
-        Category category = categoryRepository.findByIdAndDeletedFalse(dto.getId())
+        Category category = categoryRepository.findById(dto.getId())
                 .orElseThrow(exceptionFactory::categoryNotFountException);
 
         if (!Objects.equals(userDomainId, category.getUser().getDomainId())) {

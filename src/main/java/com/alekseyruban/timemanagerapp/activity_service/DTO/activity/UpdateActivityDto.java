@@ -29,4 +29,6 @@ public class UpdateActivityDto {
     private Long categoryId;
 
     private List<UpdateActivityVariationDto> variations;
+
+    private boolean deleted;
 }

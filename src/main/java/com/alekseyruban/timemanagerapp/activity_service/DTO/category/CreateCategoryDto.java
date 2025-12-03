@@ -12,4 +12,6 @@ public class CreateCategoryDto {
     @NotBlank
     @JsonDeserialize(using = TrimStringDeserializer.class)
     private String baseName;
+
+    private boolean deleted;
 }

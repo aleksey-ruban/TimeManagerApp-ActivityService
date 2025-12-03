@@ -19,4 +19,6 @@ public class UpdateCategoryDto {
 
     @NotNull
     private Long lastModifiedVersion;
+
+    private boolean deleted;
 }
