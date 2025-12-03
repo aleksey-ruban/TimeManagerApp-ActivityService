@@ -12,9 +12,9 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public User createUser(UserCreatedEvent event) {
+    public void createUser(UserCreatedEvent event) {
         User user = new User();
         user.setDomainId(event.getUserId());
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 }

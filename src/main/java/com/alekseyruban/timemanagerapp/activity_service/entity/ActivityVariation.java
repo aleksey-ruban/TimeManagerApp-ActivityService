@@ -5,8 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -14,23 +12,20 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Category {
+public class ActivityVariation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private String value;
+
+    @Column(nullable = false)
+    private Integer position;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_domain_id")
-    private User user;
-
-    @Column(nullable = false)
-    private Long lastModifiedVersion;
-
-    @Column(nullable = false)
-    private String baseName;
-
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CategoryLocale> locales = new ArrayList<>();
+    @JoinColumn(name = "activity_id", nullable = false)
+    private Activity activity;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

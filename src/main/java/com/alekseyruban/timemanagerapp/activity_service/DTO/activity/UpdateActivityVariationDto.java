@@ -1,22 +1,17 @@
-package com.alekseyruban.timemanagerapp.activity_service.DTO.category;
+package com.alekseyruban.timemanagerapp.activity_service.DTO.activity;
 
 import com.alekseyruban.timemanagerapp.activity_service.utils.TrimStringDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class UpdateCategoryDto {
-    @NotNull
+public class UpdateActivityVariationDto {
     private Long id;
 
-    @NotBlank
     @JsonDeserialize(using = TrimStringDeserializer.class)
-    private String baseName;
+    private String value;
 
-    @NotNull
-    private Long lastModifiedVersion;
+    private Boolean deleted;
 }

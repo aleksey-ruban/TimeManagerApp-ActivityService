@@ -5,8 +5,7 @@ import com.alekseyruban.timemanagerapp.activity_service.DTO.category.DeleteCateg
 import com.alekseyruban.timemanagerapp.activity_service.DTO.category.UpdateCategoryDto;
 import com.alekseyruban.timemanagerapp.activity_service.entity.Category;
 import com.alekseyruban.timemanagerapp.activity_service.entity.User;
-import com.alekseyruban.timemanagerapp.activity_service.exception.ApiException;
-import com.alekseyruban.timemanagerapp.activity_service.exception.ErrorCode;
+import com.alekseyruban.timemanagerapp.activity_service.exception.ExceptionFactory;
 import com.alekseyruban.timemanagerapp.activity_service.respository.CategoryRepository;
 import com.alekseyruban.timemanagerapp.activity_service.respository.UserRepository;
 import com.alekseyruban.timemanagerapp.activity_service.utils.Locale;
@@ -14,7 +13,6 @@ import com.alekseyruban.timemanagerapp.activity_service.utils.RetryOptimisticLoc
 import com.alekseyruban.timemanagerapp.activity_service.utils.TextValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,52 +23,23 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CategoryService {
 
-    private final ApiException userNotFountException = new ApiException(
-            HttpStatus.NOT_FOUND,
-            ErrorCode.USER_NOT_FOUND,
-            "User with given email not found"
-    );
-
-    private final ApiException categoryNotFountException = new ApiException(
-            HttpStatus.NOT_FOUND,
-            ErrorCode.CATEGORY_NOT_FOUND,
-            "Category not found"
-    );
-
-    private final ApiException notUserContentException = new ApiException(
-            HttpStatus.FORBIDDEN,
-            ErrorCode.DATA_FORBIDDEN,
-            "User is not author"
-    );
-
-    private final ApiException categoryExistsException = new ApiException(
-            HttpStatus.CONFLICT,
-            ErrorCode.CATEGORY_EXISTS,
-            "Category already exists"
-    );
-
-    private final ApiException badNameException = new ApiException(
-            HttpStatus.BAD_REQUEST,
-            ErrorCode.BAD_NAME,
-            "Name must consists of words and digits"
-    );
-
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final TextValidator textValidator;
+    private final ExceptionFactory exceptionFactory;
 
     @RetryOptimisticLock
     @Transactional
     public Category createUserCategory(Long userDomainId, CreateCategoryDto dto) {
         User user = userRepository.findByDomainId(userDomainId)
-                .orElseThrow(() -> userNotFountException);
+                .orElseThrow(exceptionFactory::userNotFountException);
 
         if (categoryRepository.findByUser_DomainIdAndBaseNameAndDeletedFalse(userDomainId, dto.getBaseName()).isPresent()) {
-            throw categoryExistsException;
+            throw exceptionFactory.categoryExistsException();
         }
 
         if (!textValidator.isValidCategory(dto.getBaseName())) {
-            throw badNameException;
+            throw exceptionFactory.badNameException();
         }
 
         Long newSnapshotVersion = user.getSnapshotVersion() + 1;
@@ -90,7 +59,7 @@ public class CategoryService {
 
     public List<Category> userCategoriesBetweenVersionsExclusiveLower(Long userDomainId, Long fromVersion, Long toVersion) {
         userRepository.findByDomainId(userDomainId)
-                .orElseThrow(() -> userNotFountException);
+                .orElseThrow(exceptionFactory::userNotFountException);
 
         return categoryRepository.findCategoriesByUserAndVersionRangeExclusiveLower(
                 userDomainId,
@@ -119,22 +88,26 @@ public class CategoryService {
     @Transactional
     public Category updateUserCategory(Long userDomainId, UpdateCategoryDto dto) {
         User user = userRepository.findByDomainId(userDomainId)
-                .orElseThrow(() -> userNotFountException);
+                .orElseThrow(exceptionFactory::userNotFountException);
 
-        Category category = categoryRepository.findById(dto.getId())
-                .orElseThrow(() -> categoryNotFountException);
+        Category category = categoryRepository.findByIdAndDeletedFalse(dto.getId())
+                .orElseThrow(exceptionFactory::categoryNotFountException);
 
         if (!Objects.equals(userDomainId, category.getUser().getDomainId())) {
-            throw notUserContentException;
+            throw exceptionFactory.notUserContentException();
+        }
+
+        if (!Objects.equals(dto.getLastModifiedVersion(), category.getLastModifiedVersion())) {
+            throw exceptionFactory.oldVersion();
         }
 
         Optional<Category> optionalCategory = categoryRepository.findByUser_DomainIdAndBaseNameAndDeletedFalse(userDomainId, dto.getBaseName());
         if (optionalCategory.isPresent() && !Objects.equals(optionalCategory.get().getId(), dto.getId())) {
-            throw categoryExistsException;
+            throw exceptionFactory.categoryExistsException();
         }
 
         if (!textValidator.isValidCategory(dto.getBaseName())) {
-            throw badNameException;
+            throw exceptionFactory.badNameException();
         }
 
         Long newSnapshotVersion = user.getSnapshotVersion() + 1;
@@ -152,13 +125,17 @@ public class CategoryService {
     @Transactional
     public void deleteUserCategory(Long userDomainId, DeleteCategoryDto dto) {
         User user = userRepository.findByDomainId(userDomainId)
-                .orElseThrow(() -> userNotFountException);
+                .orElseThrow(exceptionFactory::userNotFountException);
 
-        Category category = categoryRepository.findById(dto.getId())
-                .orElseThrow(() -> categoryNotFountException);
+        Category category = categoryRepository.findByIdAndDeletedFalse(dto.getId())
+                .orElseThrow(exceptionFactory::categoryNotFountException);
 
         if (!Objects.equals(userDomainId, category.getUser().getDomainId())) {
-            throw notUserContentException;
+            throw exceptionFactory.notUserContentException();
+        }
+
+        if (category.isDeleted()) {
+            return;
         }
 
         Long newSnapshotVersion = user.getSnapshotVersion() + 1;

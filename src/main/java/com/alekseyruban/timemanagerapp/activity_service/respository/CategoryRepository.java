@@ -53,4 +53,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     );
 
     Optional<Category> findByUser_DomainIdAndBaseNameAndDeletedFalse(Long domainId, String baseName);
+
+    Optional<Category> findByIdAndDeletedFalse(Long id);
 }
