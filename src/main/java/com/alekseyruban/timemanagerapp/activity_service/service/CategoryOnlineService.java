@@ -3,9 +3,11 @@ package com.alekseyruban.timemanagerapp.activity_service.service;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.category.CreateCategoryDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.category.DeleteCategoryDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.category.UpdateCategoryDto;
+import com.alekseyruban.timemanagerapp.activity_service.entity.Activity;
 import com.alekseyruban.timemanagerapp.activity_service.entity.Category;
 import com.alekseyruban.timemanagerapp.activity_service.entity.User;
 import com.alekseyruban.timemanagerapp.activity_service.exception.ExceptionFactory;
+import com.alekseyruban.timemanagerapp.activity_service.respository.ActivityRepository;
 import com.alekseyruban.timemanagerapp.activity_service.respository.CategoryRepository;
 import com.alekseyruban.timemanagerapp.activity_service.respository.UserRepository;
 import com.alekseyruban.timemanagerapp.activity_service.utils.Locale;
@@ -24,6 +26,7 @@ import java.util.Optional;
 public class CategoryOnlineService {
 
     private final CategoryRepository categoryRepository;
+    private final ActivityRepository activityRepository;
     private final UserRepository userRepository;
     private final TextValidator textValidator;
     private final ExceptionFactory exceptionFactory;
@@ -139,6 +142,14 @@ public class CategoryOnlineService {
         }
 
         Long newSnapshotVersion = user.getSnapshotVersion() + 1;
+
+        List<Activity> activities = activityRepository.findByCategoryId(category.getId());
+        for (Activity activity : activities) {
+            activity.setCategory(null);
+            activity.setLastModifiedVersion(newSnapshotVersion);
+            newSnapshotVersion++;
+        }
+        activityRepository.saveAll(activities);
 
         category.setDeleted(true);
         category.setLastModifiedVersion(newSnapshotVersion);

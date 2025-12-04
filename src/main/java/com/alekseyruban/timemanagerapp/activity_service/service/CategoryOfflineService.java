@@ -3,9 +3,11 @@ package com.alekseyruban.timemanagerapp.activity_service.service;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.category.CreateCategoryDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.category.DeleteCategoryDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.category.UpdateCategoryDto;
+import com.alekseyruban.timemanagerapp.activity_service.entity.Activity;
 import com.alekseyruban.timemanagerapp.activity_service.entity.Category;
 import com.alekseyruban.timemanagerapp.activity_service.entity.User;
 import com.alekseyruban.timemanagerapp.activity_service.exception.ExceptionFactory;
+import com.alekseyruban.timemanagerapp.activity_service.respository.ActivityRepository;
 import com.alekseyruban.timemanagerapp.activity_service.respository.CategoryRepository;
 import com.alekseyruban.timemanagerapp.activity_service.respository.UserRepository;
 import com.alekseyruban.timemanagerapp.activity_service.utils.RetryOptimisticLock;
@@ -14,6 +16,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -22,6 +25,7 @@ import java.util.Optional;
 public class CategoryOfflineService {
 
     private final CategoryRepository categoryRepository;
+    private final ActivityRepository activityRepository;
     private final UserRepository userRepository;
     private final TextValidator textValidator;
     private final ExceptionFactory exceptionFactory;
@@ -33,7 +37,7 @@ public class CategoryOfflineService {
                 .orElseThrow(exceptionFactory::userNotFountException);
 
         Optional<Category> conflictingCategory = categoryRepository.findByUser_DomainIdAndBaseNameAndDeletedFalse(userDomainId, dto.getBaseName());
-        if (conflictingCategory.isPresent()) {
+        if (conflictingCategory.isPresent() && !dto.isDeleted()) {
             return conflictingCategory.get();
         }
 
@@ -69,12 +73,28 @@ public class CategoryOfflineService {
             throw exceptionFactory.notUserContentException();
         }
 
-        if (!Objects.equals(dto.getLastModifiedVersion(), category.getLastModifiedVersion())) {
-            return category;
-        }
+        Long newSnapshotVersion = user.getSnapshotVersion() + 1;
 
         Optional<Category> conflictingCategory = categoryRepository.findByUser_DomainIdAndBaseNameAndDeletedFalse(userDomainId, dto.getBaseName());
-        if (conflictingCategory.isPresent() && !Objects.equals(conflictingCategory.get().getId(), dto.getId())) {
+        Boolean conflicted = conflictingCategory.isPresent() && !Objects.equals(conflictingCategory.get().getId(), dto.getId());
+        Boolean outOfData = !Objects.equals(dto.getLastModifiedVersion(), category.getLastModifiedVersion());
+        if (conflicted || outOfData) {
+            if (dto.isDeleted()) {
+                List<Activity> activities = activityRepository.findByCategoryId(category.getId());
+                for (Activity activity : activities) {
+                    activity.setCategory(null);
+                    activity.setLastModifiedVersion(newSnapshotVersion);
+                    newSnapshotVersion++;
+                }
+                activityRepository.saveAll(activities);
+
+                category.setDeleted(true);
+                category.setLastModifiedVersion(newSnapshotVersion);
+                user.setSnapshotVersion(newSnapshotVersion);
+
+                category = categoryRepository.save(category);
+                userRepository.save(user);
+            }
             return category;
         }
 
@@ -82,7 +102,15 @@ public class CategoryOfflineService {
             throw exceptionFactory.badNameException();
         }
 
-        Long newSnapshotVersion = user.getSnapshotVersion() + 1;
+        if (dto.isDeleted()) {
+            List<Activity> activities = activityRepository.findByCategoryId(category.getId());
+            for (Activity activity : activities) {
+                activity.setCategory(null);
+                activity.setLastModifiedVersion(newSnapshotVersion);
+                newSnapshotVersion++;
+            }
+            activityRepository.saveAll(activities);
+        }
 
         category.setBaseName(dto.getBaseName());
         category.setLastModifiedVersion(newSnapshotVersion);
@@ -112,6 +140,14 @@ public class CategoryOfflineService {
         }
 
         Long newSnapshotVersion = user.getSnapshotVersion() + 1;
+
+        List<Activity> activities = activityRepository.findByCategoryId(category.getId());
+        for (Activity activity : activities) {
+            activity.setCategory(null);
+            activity.setLastModifiedVersion(newSnapshotVersion);
+            newSnapshotVersion++;
+        }
+        activityRepository.saveAll(activities);
 
         category.setDeleted(true);
         category.setLastModifiedVersion(newSnapshotVersion);
