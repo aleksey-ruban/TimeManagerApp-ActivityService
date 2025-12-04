@@ -122,11 +122,10 @@ public class ActivityOnlineService {
 
         String name = activity.getName();
         if (dto.getName() != null) {
-            if (textValidator.isValidCategory(dto.getName())) {
-                name = dto.getName();
-            } else {
-                throw exceptionFactory.badNameException();
-            }
+            name = dto.getName();
+        }
+        if (!textValidator.isValidCategory(dto.getName())) {
+            throw exceptionFactory.badNameException();
         }
 
         Icon icon = activity.getIcon();
@@ -148,11 +147,11 @@ public class ActivityOnlineService {
             category = categoryRepository.findByIdAndDeletedFalse(dto.getCategoryId()).orElseThrow(
                     exceptionFactory::categoryNotFountException
             );
-            if (category.getUser() != null && !Objects.equals(category.getUser().getId(), user.getId())) {
-                throw exceptionFactory.notUserContentException();
-            }
         }
         Long categoryId = category == null ? null : category.getId();
+        if (category != null && category.getUser() != null && !Objects.equals(category.getUser().getId(), user.getId())) {
+            throw exceptionFactory.notUserContentException();
+        }
 
         Optional<Activity> conflictingActivity = activityRepository.findByUser_DomainIdAndNameAndIcon_NameAndColorAndCategory_IdAndDeletedFalse(
                 userDomainId,
@@ -182,8 +181,8 @@ public class ActivityOnlineService {
                             .activity(activity)
                             .build();
                 }
-                if (vDto.getDeleted() != null) {
-                    variation.setDeleted(vDto.getDeleted());
+                if (vDto.isDeleted()) {
+                    variation.setDeleted(true);
                 }
 
                 variation.setPosition(i);
@@ -206,7 +205,7 @@ public class ActivityOnlineService {
             }
 
             for (ActivityVariation v : stockVariations) {
-                if (!updatedVariations.contains(v) && !v.isDeleted()) {
+                if (updatedVariations.stream().noneMatch(vu -> Objects.equals(vu.getId(), v.getId())) && !v.isDeleted()) {
                     v.setDeleted(true);
                     activityVariationRepository.save(v);
                     updatedVariations.add(v);
@@ -252,7 +251,6 @@ public class ActivityOnlineService {
 
         for (ActivityVariation variation : activity.getVariations()) {
             variation.setDeleted(true);
-            activityVariationRepository.save(variation);
         }
 
         activity.setDeleted(true);

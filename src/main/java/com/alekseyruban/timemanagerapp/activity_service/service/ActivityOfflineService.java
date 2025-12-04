@@ -39,9 +39,11 @@ public class ActivityOfflineService {
 
         Icon icon = iconRepository.findByName(dto.getIcon()).orElseThrow(exceptionFactory::badIcon);
 
-        ActivityColor color = null;
+        ActivityColor color;
         if (!ActivityColor.isValidColor(dto.getIconColor())) {
             color = ActivityColor.GRAY;
+        } else {
+            color = ActivityColor.valueOf(dto.getIconColor());
         }
 
         if (!textValidator.isValidCategory(dto.getName())) {
@@ -70,7 +72,7 @@ public class ActivityOfflineService {
                 color,
                 categoryId
         );
-        if (conflictingActivity.isPresent()) {
+        if (conflictingActivity.isPresent() && !dto.isDeleted()) {
             return conflictingActivity.get();
         }
 
@@ -90,7 +92,7 @@ public class ActivityOfflineService {
         for (int i = 0; i < dto.getVariations().size(); i++) {
             ActivityVariation variation = ActivityVariation.builder()
                     .value(dto.getVariations().get(i).getValue())
-                    .deleted(dto.getVariations().get(i).getDeleted())
+                    .deleted(dto.getVariations().get(i).isDeleted())
                     .position(i)
                     .activity(activity)
                     .build();
@@ -118,22 +120,9 @@ public class ActivityOfflineService {
             throw exceptionFactory.notUserContentException();
         }
 
-        if (!Objects.equals(dto.getLastModifiedVersion(), activity.getLastModifiedVersion())) {
-            return activity;
-        }
-
         String name = activity.getName();
         if (dto.getName() != null) {
-            if (textValidator.isValidCategory(dto.getName())) {
-                name = dto.getName();
-            } else {
-                throw exceptionFactory.badNameException();
-            }
-        }
-
-        Icon icon = activity.getIcon();
-        if (dto.getIcon() != null) {
-            icon = iconRepository.findByName(dto.getIcon()).orElseThrow(exceptionFactory::badIcon);
+            name = dto.getName();
         }
 
         ActivityColor activityColor = activity.getColor();
@@ -148,21 +137,47 @@ public class ActivityOfflineService {
         Category category = activity.getCategory();
         if (dto.getCategoryId() != null) {
             category = categoryRepository.findById(dto.getCategoryId()).orElse(null);
-            if (category != null && category.getUser() != null && !Objects.equals(category.getUser().getId(), user.getId())) {
-                throw exceptionFactory.notUserContentException();
-            }
         }
         Long categoryId = category == null ? null : category.getId();
+
+        Long newSnapshotVersion = user.getSnapshotVersion() + 1;
 
         Optional<Activity> conflictingActivity = activityRepository.findByUser_DomainIdAndNameAndIcon_NameAndColorAndCategory_IdAndDeletedFalse(
                 userDomainId,
                 name,
-                icon.getName(),
+                dto.getIcon() == null ? activity.getIcon().getName() : dto.getIcon(),
                 activityColor,
                 categoryId
         );
-        if (conflictingActivity.isPresent() && !Objects.equals(conflictingActivity.get().getId(), dto.getId())) {
+        Boolean conflicted = conflictingActivity.isPresent() && !Objects.equals(conflictingActivity.get().getId(), dto.getId());
+        Boolean outOfData = !Objects.equals(dto.getLastModifiedVersion(), activity.getLastModifiedVersion());
+
+        if (conflicted || outOfData) {
+            if (dto.isDeleted()) {
+                activity.setDeleted(true);
+                activity.setLastModifiedVersion(newSnapshotVersion);
+                user.setSnapshotVersion(newSnapshotVersion);
+
+                for (ActivityVariation variation : activity.getVariations()) {
+                    variation.setDeleted(true);
+                }
+
+                activity = activityRepository.save(activity);
+                userRepository.save(user);
+            }
             return activity;
+        }
+
+        if (!textValidator.isValidCategory(name)) {
+            throw exceptionFactory.badNameException();
+        }
+        if (category != null && category.getUser() != null && !Objects.equals(category.getUser().getId(), user.getId())) {
+            throw exceptionFactory.notUserContentException();
+        }
+
+        Icon icon = activity.getIcon();
+        if (dto.getIcon() != null) {
+            icon = iconRepository.findByName(dto.getIcon()).orElseThrow(exceptionFactory::badIcon);
         }
 
         List<ActivityVariation> variations;
@@ -182,8 +197,8 @@ public class ActivityOfflineService {
                             .activity(activity)
                             .build();
                 }
-                if (vDto.getDeleted() != null) {
-                    variation.setDeleted(vDto.getDeleted());
+                if (vDto.isDeleted()) {
+                    variation.setDeleted(true);
                 }
 
                 variation.setPosition(i);
@@ -206,7 +221,7 @@ public class ActivityOfflineService {
             }
 
             for (ActivityVariation v : stockVariations) {
-                if (!updatedVariations.contains(v) && !v.isDeleted()) {
+                if (updatedVariations.stream().noneMatch(vu -> Objects.equals(vu.getId(), v.getId())) && !v.isDeleted()) {
                     v.setDeleted(true);
                     activityVariationRepository.save(v);
                     updatedVariations.add(v);
@@ -215,8 +230,6 @@ public class ActivityOfflineService {
             variations = updatedVariations;
         }
 
-        Long newSnapshotVersion = user.getSnapshotVersion() + 1;
-
         activity.setLastModifiedVersion(newSnapshotVersion);
         activity.setName(name);
         activity.setCategory(category);
@@ -224,6 +237,13 @@ public class ActivityOfflineService {
         activity.setColor(activityColor);
         activity.setVariations(variations);
         activity.setDeleted(dto.isDeleted());
+
+        if (dto.isDeleted()) {
+            for (ActivityVariation variation : activity.getVariations()) {
+                variation.setDeleted(true);
+            }
+        }
+
         Activity finalActivity = activityRepository.save(activity);
 
         user.setSnapshotVersion(newSnapshotVersion);
@@ -253,7 +273,6 @@ public class ActivityOfflineService {
 
         for (ActivityVariation variation : activity.getVariations()) {
             variation.setDeleted(true);
-            activityVariationRepository.save(variation);
         }
 
         activity.setDeleted(true);

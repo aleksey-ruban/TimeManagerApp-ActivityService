@@ -13,5 +13,5 @@ public class UpdateActivityVariationDto {
     @JsonDeserialize(using = TrimStringDeserializer.class)
     private String value;
 
-    private Boolean deleted;
+    private boolean deleted;
 }
