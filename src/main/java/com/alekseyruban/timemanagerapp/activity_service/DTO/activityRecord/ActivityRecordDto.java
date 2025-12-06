@@ -1,0 +1,37 @@
+package com.alekseyruban.timemanagerapp.activity_service.DTO.activityRecord;
+
+import com.alekseyruban.timemanagerapp.activity_service.entity.ActivityRecord;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+import java.time.OffsetDateTime;
+
+@Data
+@AllArgsConstructor
+public class ActivityRecordDto {
+    private Long id;
+
+    private Long lastModifiedVersion;
+
+    private Long activityId;
+
+    private Long variationId;
+
+    private OffsetDateTime startedAt;
+
+    private OffsetDateTime endedAt;
+
+    private boolean deleted;
+
+    public static ActivityRecordDto fromActivityRecord(ActivityRecord record) {
+        return new ActivityRecordDto(
+                record.getId(),
+                record.getLastModifiedVersion(),
+                record.getActivity().getId(),
+                record.getVariation() != null ? record.getVariation().getId() : null,
+                record.getStartedAt(),
+                record.getEndedAt(),
+                record.isDeleted()
+        );
+    }
+}
