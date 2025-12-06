@@ -34,4 +34,11 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     );
 
     Optional<Activity> findByIdAndDeletedFalse(Long id);
+
+    @Query("""
+       SELECT a
+       FROM Activity a
+       WHERE a.category.id = :categoryId
+       """)
+    List<Activity> findByCategoryId(@Param("categoryId") Long categoryId);
 }

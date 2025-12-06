@@ -100,4 +100,28 @@ public class ExceptionFactory {
                 "Variation already exists"
         );
     }
+
+    public ApiException badTimeParams() {
+        return new ApiException(
+                HttpStatus.BAD_REQUEST,
+                ErrorCode.BAD_PARAMS,
+                "End time must be later than start time"
+        );
+    }
+
+    public ApiException activityRecordNotFound() {
+        return new ApiException(
+                HttpStatus.NOT_FOUND,
+                ErrorCode.OBJECT_NOT_FOUND,
+                "Activity record not found"
+        );
+    }
+
+    public ApiException sameNamesException() {
+        return new ApiException(
+                HttpStatus.BAD_REQUEST,
+                ErrorCode.BAD_PARAMS,
+                "Objects has same names"
+        );
+    }
 }

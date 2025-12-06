@@ -27,7 +27,7 @@ public class CreateActivityDto {
 
     private Long categoryId;
 
-    private List<UpdateActivityVariationDto> variations;
+    private List<CreateActivityVariationDto> variations;
 
     private boolean deleted;
 }

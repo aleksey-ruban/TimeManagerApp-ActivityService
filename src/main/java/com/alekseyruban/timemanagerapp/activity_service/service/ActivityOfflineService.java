@@ -1,9 +1,6 @@
 package com.alekseyruban.timemanagerapp.activity_service.service;
 
-import com.alekseyruban.timemanagerapp.activity_service.DTO.activity.CreateActivityDto;
-import com.alekseyruban.timemanagerapp.activity_service.DTO.activity.DeleteActivityDto;
-import com.alekseyruban.timemanagerapp.activity_service.DTO.activity.UpdateActivityDto;
-import com.alekseyruban.timemanagerapp.activity_service.DTO.activity.UpdateActivityVariationDto;
+import com.alekseyruban.timemanagerapp.activity_service.DTO.activity.*;
 import com.alekseyruban.timemanagerapp.activity_service.entity.*;
 import com.alekseyruban.timemanagerapp.activity_service.exception.ExceptionFactory;
 import com.alekseyruban.timemanagerapp.activity_service.respository.*;
@@ -14,10 +11,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +45,7 @@ public class ActivityOfflineService {
             throw exceptionFactory.badNameException();
         }
 
-        for (UpdateActivityVariationDto v : dto.getVariations()) {
+        for (CreateActivityVariationDto v : dto.getVariations()) {
             if (!textValidator.isValidCategory(v.getValue())) {
                 throw exceptionFactory.badNameException();
             }
@@ -97,6 +92,17 @@ public class ActivityOfflineService {
                     .activity(activity)
                     .build();
             variations.add(variation);
+        }
+
+        boolean hasDuplicates = dto.getVariations().stream()
+                .map(CreateActivityVariationDto::getValue)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet())
+                .size() != dto.getVariations().stream()
+                .filter(i -> i.getValue() != null)
+                .count();
+        if (hasDuplicates) {
+            throw exceptionFactory.sameNamesException();
         }
 
         activity.setVariations(variations);
@@ -192,6 +198,9 @@ public class ActivityOfflineService {
                 if (vDto.getId() != null) {
                     variation = activityVariationRepository.findById(vDto.getId())
                             .orElseThrow(exceptionFactory::activityVariationNotFound);
+                    if (!Objects.equals(variation.getActivity().getId(), activity.getId())) {
+                        throw exceptionFactory.activityVariationNotFound();
+                    }
                 } else {
                     variation = ActivityVariation.builder()
                             .activity(activity)
@@ -228,6 +237,17 @@ public class ActivityOfflineService {
                 }
             }
             variations = updatedVariations;
+        }
+
+        boolean hasDuplicates = dto.getVariations().stream()
+                .map(UpdateActivityVariationDto::getValue)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet())
+                .size() != dto.getVariations().stream()
+                .filter(i -> i.getValue() != null)
+                .count();
+        if (hasDuplicates) {
+            throw exceptionFactory.sameNamesException();
         }
 
         activity.setLastModifiedVersion(newSnapshotVersion);
