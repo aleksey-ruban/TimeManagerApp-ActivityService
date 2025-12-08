@@ -36,6 +36,9 @@ public class ActivityRecord {
 
     private OffsetDateTime endedAt;
 
+    @Column(nullable = false, length = 64)
+    private String timeZone;
+
     @Column(nullable = false)
     private boolean deleted = false;
 

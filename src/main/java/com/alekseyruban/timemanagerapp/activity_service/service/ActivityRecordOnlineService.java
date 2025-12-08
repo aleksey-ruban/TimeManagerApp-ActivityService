@@ -57,6 +57,7 @@ public class ActivityRecordOnlineService {
 
         OffsetDateTime started = dto.getStartedAt();
         OffsetDateTime ended = dto.getEndedAt();
+        String timeZone = dto.getTimeZone();
 
         if (ended != null && !ended.isAfter(started.plusSeconds(1))) {
             throw exceptionFactory.badTimeParams();
@@ -70,6 +71,7 @@ public class ActivityRecordOnlineService {
                 .variation(variation)
                 .startedAt(started)
                 .endedAt(ended)
+                .timeZone(timeZone)
                 .lastModifiedVersion(newSnapshotVersion)
                 .build();
 
@@ -121,11 +123,17 @@ public class ActivityRecordOnlineService {
             throw exceptionFactory.badTimeParams();
         }
 
+        String timeZone = record.getTimeZone();
+        if (dto.getTimeZone() != null) {
+            timeZone = dto.getTimeZone();
+        }
+
         Long newSnapshotVersion = user.getSnapshotVersion() + 1;
 
         record.setVariation(variation);
         record.setStartedAt(started);
         record.setEndedAt(ended);
+        record.setTimeZone(timeZone);
         record.setLastModifiedVersion(newSnapshotVersion);
 
         user.setSnapshotVersion(newSnapshotVersion);

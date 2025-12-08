@@ -21,6 +21,8 @@ public class ActivityRecordDto {
 
     private OffsetDateTime endedAt;
 
+    private String timeZone;
+
     private boolean deleted;
 
     public static ActivityRecordDto fromActivityRecord(ActivityRecord record) {
@@ -31,6 +33,7 @@ public class ActivityRecordDto {
                 record.getVariation() != null ? record.getVariation().getId() : null,
                 record.getStartedAt(),
                 record.getEndedAt(),
+                record.getTimeZone(),
                 record.isDeleted()
         );
     }
