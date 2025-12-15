@@ -17,6 +17,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -55,8 +56,8 @@ public class ActivityRecordOnlineService {
             throw exceptionFactory.activityVariationNotFound();
         }
 
-        OffsetDateTime started = dto.getStartedAt();
-        OffsetDateTime ended = dto.getEndedAt();
+        Instant started = dto.getStartedAt();
+        Instant ended = dto.getEndedAt();
         String timeZone = dto.getTimeZone();
 
         if (ended != null && !ended.isAfter(started.plusSeconds(1))) {
@@ -109,12 +110,12 @@ public class ActivityRecordOnlineService {
             throw exceptionFactory.activityVariationNotFound();
         }
 
-        OffsetDateTime started = record.getStartedAt();
+        Instant started = record.getStartedAt();
         if (dto.getStartedAt() != null) {
             started = dto.getStartedAt();
         }
 
-        OffsetDateTime ended = record.getEndedAt();
+        Instant ended = record.getEndedAt();
         if (dto.getEndedAt() != null) {
             ended = dto.getEndedAt();
         }

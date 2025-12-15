@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,4 +27,17 @@ public interface ActivityRecordRepository extends JpaRepository<ActivityRecord, 
             @Param("fromVersion") Long fromVersion,
             @Param("toVersion") Long toVersion
     );
+
+    @Query("""
+        SELECT ar
+        FROM ActivityRecord ar
+        WHERE ar.user.domainId = :domainId
+          AND ar.startedAt <= :paramEnd
+          AND (ar.endedAt IS NULL OR ar.endedAt >= :paramStart)
+          AND ar.deleted = false
+    """)
+    List<ActivityRecord> findOverlappingByUserDomainId(
+            @Param("domainId") Long domainId,
+            @Param("paramStart") Instant paramStart,
+            @Param("paramEnd") Instant paramEnd);
 }

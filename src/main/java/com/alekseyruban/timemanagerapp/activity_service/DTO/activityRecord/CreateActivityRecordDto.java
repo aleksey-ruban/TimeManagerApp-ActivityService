@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 
 @Data
@@ -18,9 +19,9 @@ public class CreateActivityRecordDto {
     private Long variationId;
 
     @NotNull
-    private OffsetDateTime startedAt;
+    private Instant startedAt;
 
-    private OffsetDateTime endedAt;
+    private Instant endedAt;
 
     @ValidTimeZone
     @JsonDeserialize(using = TrimStringDeserializer.class)

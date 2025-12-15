@@ -4,6 +4,7 @@ import com.alekseyruban.timemanagerapp.activity_service.entity.ActivityRecord;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 
 @Data
@@ -17,9 +18,9 @@ public class ActivityRecordDto {
 
     private Long variationId;
 
-    private OffsetDateTime startedAt;
+    private Instant startedAt;
 
-    private OffsetDateTime endedAt;
+    private Instant endedAt;
 
     private String timeZone;
 
