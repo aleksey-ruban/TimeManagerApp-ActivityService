@@ -124,4 +124,28 @@ public class ExceptionFactory {
                 "Objects has same names"
         );
     }
+
+    public ApiException chronometryNotFoundException() {
+        return new ApiException(
+                HttpStatus.NOT_FOUND,
+                ErrorCode.OBJECT_NOT_FOUND,
+                "Chronometry not found"
+        );
+    }
+
+    public ApiException chronometryAlreadyExistsException() {
+        return new ApiException(
+                HttpStatus.CONFLICT,
+                ErrorCode.OBJECT_EXISTS,
+                "Chronometry already exists"
+        );
+    }
+
+    public ApiException tooEarlyFinishChronometry() {
+        return new ApiException(
+                HttpStatus.TOO_EARLY,
+                ErrorCode.TOO_EARLY,
+                "Too early to finish chronometry"
+        );
+    }
 }

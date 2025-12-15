@@ -23,5 +23,6 @@ public enum ErrorCode {
     OLD_OBJECT_VERSION,
     OBJECT_NOT_FOUND,
     DATA_FORBIDDEN,
-    OBJECT_EXISTS
+    OBJECT_EXISTS,
+    TOO_EARLY
 }
