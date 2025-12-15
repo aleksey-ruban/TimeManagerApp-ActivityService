@@ -3,6 +3,7 @@ package com.alekseyruban.timemanagerapp.activity_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -32,9 +33,9 @@ public class ActivityRecord {
     private ActivityVariation variation;
 
     @Column(nullable = false)
-    private OffsetDateTime startedAt;
+    private Instant startedAt;
 
-    private OffsetDateTime endedAt;
+    private Instant endedAt;
 
     @Column(nullable = false, length = 64)
     private String timeZone;
