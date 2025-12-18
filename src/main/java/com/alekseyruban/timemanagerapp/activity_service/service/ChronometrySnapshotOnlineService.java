@@ -1,6 +1,7 @@
 package com.alekseyruban.timemanagerapp.activity_service.service;
 
 import com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry.*;
+import com.alekseyruban.timemanagerapp.activity_service.DTO.rabbit.ChronometryCreatedEvent;
 import com.alekseyruban.timemanagerapp.activity_service.entity.*;
 import com.alekseyruban.timemanagerapp.activity_service.entity.snapshot.ActivityRecordSnapshot;
 import com.alekseyruban.timemanagerapp.activity_service.entity.snapshot.ActivitySnapshot;
@@ -8,6 +9,7 @@ import com.alekseyruban.timemanagerapp.activity_service.entity.snapshot.Activity
 import com.alekseyruban.timemanagerapp.activity_service.entity.snapshot.CategorySnapshot;
 import com.alekseyruban.timemanagerapp.activity_service.exception.ExceptionFactory;
 import com.alekseyruban.timemanagerapp.activity_service.respository.*;
+import com.alekseyruban.timemanagerapp.activity_service.service.rabbit.ChronometryEventPublisher;
 import com.alekseyruban.timemanagerapp.activity_service.utils.Locale;
 import com.alekseyruban.timemanagerapp.activity_service.utils.RetryOptimisticLock;
 import jakarta.transaction.Transactional;
@@ -28,6 +30,7 @@ public class ChronometrySnapshotOnlineService {
     private final ActivityRecordRepository activityRecordRepository;
     private final UserRepository userRepository;
     private final ExceptionFactory exceptionFactory;
+    private final ChronometryEventPublisher chronometryEventPublisher;
 
     private static final Set<String> SUPPORTED_LOCALES = Set.of("en", "ru");
 
@@ -200,6 +203,8 @@ public class ChronometrySnapshotOnlineService {
                         .toList()
         );
 
+        chronometryEventPublisher.publishUserCreated(new ChronometryCreatedEvent(chronometry.getId()));
+
         return chronometryDto;
     }
 
@@ -255,5 +260,55 @@ public class ChronometrySnapshotOnlineService {
         if (record.getEndedAt().isAfter(end)) {
             record.setEndedAt(end);
         }
+    }
+
+    @RetryOptimisticLock
+    @Transactional
+    public ChronometryAnalyticsDto getChronometryForAnalytics(GetChronometryDto dto) {
+
+        ChronometrySnapshot chronometry = chronometrySnapshotRepository.findById(dto.getId())
+                .orElseThrow(exceptionFactory::chronometryNotFoundException);
+
+        List<ActivityRecordSnapshot> activityRecords = chronometry.getActivityRecords();
+
+        Set<ActivitySnapshot> activitiesSnapshotCache = new HashSet<>();
+        Set<ActivityVariationSnapshot> activityVariationSnapshotCache = new HashSet<>();
+        Set<CategorySnapshot> categoriesSnapshotCache = new HashSet<>();
+
+        for (ActivityRecordSnapshot ar : activityRecords) {
+            ActivitySnapshot activity = ar.getActivity();
+            ActivityVariationSnapshot variation = ar.getVariation();
+            CategorySnapshot category = activity.getCategory();
+
+            categoriesSnapshotCache.add(category);
+
+            activityVariationSnapshotCache.add(variation);
+
+            activitiesSnapshotCache.add(activity);
+        }
+
+        ChronometryAnalyticsDto chronometryDto = ChronometryAnalyticsDto.fromChronometry(chronometry);
+        chronometryDto.setCategorySnapshotList(
+                categoriesSnapshotCache.stream()
+                        .map(CategorySnapshotDto::fromCategorySnapshot)
+                        .toList()
+        );
+        chronometryDto.setActivitySnapshotList(
+                activitiesSnapshotCache.stream()
+                        .map(ActivitySnapshotDto::fromActivitySnapshot)
+                        .toList()
+        );
+        chronometryDto.setActivityVariationSnapshotList(
+                activityVariationSnapshotCache.stream()
+                        .map(ActivityVariationSnapshotDto::fromActivityVariation)
+                        .toList()
+        );
+        chronometryDto.setActivityRecordSnapshotList(
+                activityRecords.stream()
+                        .map(ActivityRecordSnapshotDto::fromActivityRecordSnapshot)
+                        .toList()
+        );
+
+        return chronometryDto;
     }
 }
