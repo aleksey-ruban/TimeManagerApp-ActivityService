@@ -44,7 +44,7 @@ public class ActivityRecordOnlineService {
         ActivityVariation variation = null;
         if (dto.getVariationId() != null) {
             variation = activityVariationRepository.findByIdAndDeletedFalse(dto.getVariationId())
-                    .orElse(null);
+                    .orElseThrow(exceptionFactory::activityVariationNotFound);
         }
 
         boolean notUserContext = !Objects.equals(activity.getUser().getId(), userDomainId);
@@ -53,7 +53,7 @@ public class ActivityRecordOnlineService {
         }
         boolean notActivityVariation = variation != null && !Objects.equals(activity.getId(), variation.getActivity().getId());
         if (notActivityVariation) {
-            throw exceptionFactory.activityVariationNotFound();
+            throw exceptionFactory.notUserContentException();
         }
 
         Instant started = dto.getStartedAt();
@@ -101,7 +101,7 @@ public class ActivityRecordOnlineService {
                     .orElse(null);
         }
 
-        boolean notUserContext = !Objects.equals(record.getUser().getId(), userDomainId);
+        boolean notUserContext = !Objects.equals(record.getUser().getDomainId(), userDomainId);
         if (notUserContext) {
             throw exceptionFactory.notUserContentException();
         }
