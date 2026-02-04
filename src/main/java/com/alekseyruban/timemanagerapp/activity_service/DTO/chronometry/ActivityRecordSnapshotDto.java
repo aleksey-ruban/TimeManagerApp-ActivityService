@@ -22,7 +22,7 @@ public class ActivityRecordSnapshotDto {
         return new ActivityRecordSnapshotDto(
                 activityRecordSnapshot.getId(),
                 activityRecordSnapshot.getActivity().getId(),
-                activityRecordSnapshot.getVariation().getId(),
+                activityRecordSnapshot.getVariation() != null ? activityRecordSnapshot.getVariation().getId() : null,
                 activityRecordSnapshot.getStartedAt(),
                 activityRecordSnapshot.getEndedAt(),
                 activityRecordSnapshot.getTimeZone()

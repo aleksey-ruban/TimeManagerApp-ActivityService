@@ -12,7 +12,7 @@ public class ChronometryEventPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
-    public void publishUserCreated(ChronometryCreatedEvent event) {
+    public void publishChronometryCreated(ChronometryCreatedEvent event) {
         rabbitTemplate.convertAndSend(
                 RabbitConfig.CHRONOMETRY_EVENTS_EXCHANGE,
                 RabbitConfig.CHRONOMETRY_CREATED_KEY,

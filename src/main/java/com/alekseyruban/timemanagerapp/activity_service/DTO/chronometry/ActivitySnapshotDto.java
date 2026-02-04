@@ -19,7 +19,7 @@ public class ActivitySnapshotDto {
         return new ActivitySnapshotDto(
                 activitySnapshot.getId(),
                 activitySnapshot.getName(),
-                activitySnapshot.getCategory().getId(),
+                activitySnapshot.getCategory() != null ? activitySnapshot.getCategory().getId() : null,
                 activitySnapshot.getIcon().getName(),
                 activitySnapshot.getColor().name()
         );

@@ -30,7 +30,7 @@ public class ActivityDto {
                 activity.getId(),
                 activity.getLastModifiedVersion(),
                 activity.getName(),
-                activity.getCategory().getId(),
+                activity.getCategory() != null ? activity.getCategory().getId() : null,
                 activity.getIcon().getName(),
                 activity.getColor().name(),
                 activity.getVariations().stream()

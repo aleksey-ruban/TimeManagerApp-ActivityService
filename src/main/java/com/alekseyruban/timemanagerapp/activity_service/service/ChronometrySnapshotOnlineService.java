@@ -129,20 +129,26 @@ public class ChronometrySnapshotOnlineService {
         for (ActivityRecord ar : activityRecords) {
             Activity activity = ar.getActivity();
             ActivityVariation variation = ar.getVariation();
+            Long variationId = variation != null ? variation.getId() : null;
             Category category = activity.getCategory();
 
-            CategorySnapshot categorySnapshot = categoriesSnapshotCache.computeIfAbsent(
-                    category.getId(),
-                    id -> {
-                        CategorySnapshot cs = new CategorySnapshot();
-                        String name = resolveBaseName(category, Locale.fromCode(lang));
-                        cs.setBaseName(name);
-                        return cs;
-                    }
-            );
+            CategorySnapshot categorySnapshot;
+            if (category != null) {
+                categorySnapshot = categoriesSnapshotCache.computeIfAbsent(
+                        category.getId(),
+                        id -> {
+                            CategorySnapshot cs = new CategorySnapshot();
+                            String name = resolveBaseName(category, Locale.fromCode(lang));
+                            cs.setBaseName(name);
+                            return cs;
+                        }
+                );
+            } else {
+                categorySnapshot = null;
+            }
 
             for (ActivityVariation av : activity.getVariations()) {
-                if (Objects.equals(ar.getVariation().getId(), av.getId())) {
+                if (Objects.equals(variationId, av.getId())) {
                     activityVariationSnapshotCache.computeIfAbsent(
                             activity.getId(),
                             id -> new HashMap<>()
@@ -158,13 +164,21 @@ public class ChronometrySnapshotOnlineService {
                     activity.getId(),
                     id -> ActivitySnapshot.from(activity, categorySnapshot)
             );
-            activitySnapshot.getVariations().add(activityVariationSnapshotCache.get(activity.getId()).get(ar.getVariation().getId()));
-            activityVariationSnapshotCache.get(activity.getId()).get(ar.getVariation().getId()).setActivity(activitySnapshot);
+            ActivityVariationSnapshot activityVariationSnapshot;
+            if (variationId != null) {
+                activityVariationSnapshot = activityVariationSnapshotCache.get(activity.getId()).get(variationId);
+            } else {
+                activityVariationSnapshot = null;
+            }
+            if (variationId != null) {
+                activitySnapshot.getVariations().add(activityVariationSnapshot);
+                activityVariationSnapshot.setActivity(activitySnapshot);
+            }
 
             ActivityRecordSnapshot recordSnapshot = ActivityRecordSnapshot.from(
                     ar,
                     activitySnapshot,
-                    activityVariationSnapshotCache.get(activity.getId()).get(variation.getId()),
+                    activityVariationSnapshot,
                     chronometry
             );
             clampRecord(recordSnapshot, fromInstant, toInstant);
@@ -203,7 +217,7 @@ public class ChronometrySnapshotOnlineService {
                         .toList()
         );
 
-        chronometryEventPublisher.publishUserCreated(new ChronometryCreatedEvent(chronometry.getId()));
+        chronometryEventPublisher.publishChronometryCreated(new ChronometryCreatedEvent(chronometry.getId()));
 
         return chronometryDto;
     }
@@ -280,9 +294,13 @@ public class ChronometrySnapshotOnlineService {
             ActivityVariationSnapshot variation = ar.getVariation();
             CategorySnapshot category = activity.getCategory();
 
-            categoriesSnapshotCache.add(category);
+            if (category != null) {
+                categoriesSnapshotCache.add(category);
+            }
 
-            activityVariationSnapshotCache.add(variation);
+            if (variation != null) {
+                activityVariationSnapshotCache.add(variation);
+            }
 
             activitiesSnapshotCache.add(activity);
         }
