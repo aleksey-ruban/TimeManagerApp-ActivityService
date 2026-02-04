@@ -1,6 +1,7 @@
 package com.alekseyruban.timemanagerapp.activity_service.respository;
 
 import com.alekseyruban.timemanagerapp.activity_service.entity.ActivityRecord;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,7 +26,8 @@ public interface ActivityRecordRepository extends JpaRepository<ActivityRecord, 
     List<ActivityRecord> findActivityRecordsByUserAndVersionRangeExclusiveLower(
             @Param("domainId") Long domainId,
             @Param("fromVersion") Long fromVersion,
-            @Param("toVersion") Long toVersion
+            @Param("toVersion") Long toVersion,
+            Pageable pageable
     );
 
     @Query("""

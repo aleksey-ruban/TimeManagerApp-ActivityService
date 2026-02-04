@@ -9,6 +9,7 @@ import com.alekseyruban.timemanagerapp.activity_service.utils.RetryOptimisticLoc
 import com.alekseyruban.timemanagerapp.activity_service.utils.TextValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -288,7 +289,8 @@ public class ActivityOnlineService {
         return activityRepository.findActivitiesByUserAndVersionRangeExclusiveLower(
                 userDomainId,
                 fromVersion,
-                toVersion
+                toVersion,
+                Pageable.unpaged()
         );
     }
 

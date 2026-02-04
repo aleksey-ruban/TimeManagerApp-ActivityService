@@ -2,6 +2,7 @@ package com.alekseyruban.timemanagerapp.activity_service.respository;
 
 import com.alekseyruban.timemanagerapp.activity_service.entity.Activity;
 import com.alekseyruban.timemanagerapp.activity_service.utils.ActivityColor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,7 +23,8 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     List<Activity> findActivitiesByUserAndVersionRangeExclusiveLower(
             @Param("domainId") Long domainId,
             @Param("fromVersion") Long fromVersion,
-            @Param("toVersion") Long toVersion
+            @Param("toVersion") Long toVersion,
+            Pageable pageable
     );
 
     Optional<Activity> findByUser_DomainIdAndNameAndIcon_NameAndColorAndCategory_IdAndDeletedFalse(

@@ -15,6 +15,7 @@ import com.alekseyruban.timemanagerapp.activity_service.respository.UserReposito
 import com.alekseyruban.timemanagerapp.activity_service.utils.RetryOptimisticLock;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -177,7 +178,8 @@ public class ActivityRecordOnlineService {
         return activityRecordRepository.findActivityRecordsByUserAndVersionRangeExclusiveLower(
                 userDomainId,
                 fromVersion,
-                toVersion
+                toVersion,
+                Pageable.unpaged()
         );
     }
 }
