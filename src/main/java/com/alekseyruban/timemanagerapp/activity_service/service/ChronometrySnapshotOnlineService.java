@@ -41,45 +41,57 @@ public class ChronometrySnapshotOnlineService {
                 .orElseThrow(exceptionFactory::userNotFountException);
 
         ZoneId zone = ZoneId.of(dto.getTimeZone());
-        LocalDate todayInZone = LocalDate.now(zone);
 
         List<ChronometrySnapshot> chronometrySnapshotList = chronometrySnapshotRepository.findByUser_DomainIdAndFinishedFalse(userDomainId);
         if (!chronometrySnapshotList.isEmpty()) {
             throw exceptionFactory.chronometryAlreadyExistsException();
         }
-//        for (ChronometrySnapshot c : chronometrySnapshotList) {
-//            if (c.getEndDate() == null || c.getEndDate().isAfter(todayInZone)) {
-//                return c;
-//            }
-//        }
 
         LocalDate startDate = resolveLocalStartDate(dto.getCreateTime(), dto.getTimeZone());
         LocalDate endDate = startDate.plusDays(6);
+
+        Long newSnapshotVersion = user.getSnapshotVersion() + 1;
 
         ChronometrySnapshot chronometry = ChronometrySnapshot.builder()
                 .startDate(startDate)
                 .endDate(endDate)
                 .timeZone(zone.getId())
                 .user(user)
+                .deleted(false)
+                .lastModifiedVersion(newSnapshotVersion)
                 .build();
+
+        user.setSnapshotVersion(newSnapshotVersion);
+        userRepository.save(user);
 
         return chronometrySnapshotRepository.save(chronometry);
     }
 
     @RetryOptimisticLock
     @Transactional
-    public void cancelChronometry(Long userDomainId, CancelChronometryDto dto) {
+    public void deleteChronometry(Long userDomainId, DeleteChronometryDto dto) {
         User user = userRepository.findByDomainId(userDomainId)
                 .orElseThrow(exceptionFactory::userNotFountException);
 
         ChronometrySnapshot chronometry = chronometrySnapshotRepository.findById(dto.getId())
                 .orElseThrow(exceptionFactory::chronometryNotFoundException);
 
-        if (chronometry.getFinished()) {
-            throw exceptionFactory.chronometryAlreadyExistsException();
+        if (!chronometry.getUser().getDomainId().equals(userDomainId)) {
+            throw exceptionFactory.notUserContentException();
         }
 
-        chronometrySnapshotRepository.delete(chronometry);
+        if (chronometry.getDeleted()) {
+            return;
+        }
+
+        Long newSnapshotVersion = user.getSnapshotVersion() + 1;
+
+        chronometry.setDeleted(true);
+        chronometry.setLastModifiedVersion(newSnapshotVersion);
+        user.setSnapshotVersion(newSnapshotVersion);
+
+        chronometrySnapshotRepository.save(chronometry);
+        userRepository.save(user);
     }
 
     @RetryOptimisticLock
@@ -95,6 +107,14 @@ public class ChronometrySnapshotOnlineService {
         ChronometrySnapshot chronometry = chronometrySnapshotRepository.findById(dto.getId())
                 .orElseThrow(exceptionFactory::chronometryNotFoundException);
 
+        if (!chronometry.getUser().getDomainId().equals(userDomainId)) {
+            throw exceptionFactory.notUserContentException();
+        }
+
+        if (chronometry.getFinished()) {
+            throw exceptionFactory.chronometryAlreadyExistsException();
+        }
+
         LocalDate endDate = chronometry.getEndDate();
         if (endDate == null) {
             endDate = chronometry.getStartDate().plusDays(6);
@@ -103,6 +123,8 @@ public class ChronometrySnapshotOnlineService {
         if (!availableForFinish(dto.getFinishTime(), dto.getTimeZone(), endDate)) {
             throw exceptionFactory.tooEarlyFinishChronometry();
         }
+
+        Long newSnapshotVersion = user.getSnapshotVersion() + 1;
 
         String zoneId = chronometry.getTimeZone();
         Instant fromInstant = chronometry.getStartDate()
@@ -191,8 +213,12 @@ public class ChronometrySnapshotOnlineService {
         activityRecordSnapshotRepository.saveAll(activityRecordsSnapshots);
 
         chronometry.setFinished(true);
+        chronometry.setLastModifiedVersion(newSnapshotVersion);
         chronometry.getActivityRecords().addAll(activityRecordsSnapshots);
         chronometry = chronometrySnapshotRepository.save(chronometry);
+
+        user.setSnapshotVersion(newSnapshotVersion);
+        userRepository.save(user);
 
         ChronometryDto chronometryDto = ChronometryDto.fromChronometry(chronometry);
         chronometryDto.setCategorySnapshotList(

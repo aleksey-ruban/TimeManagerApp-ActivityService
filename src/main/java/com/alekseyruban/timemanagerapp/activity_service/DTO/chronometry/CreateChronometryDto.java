@@ -16,4 +16,6 @@ public class CreateChronometryDto {
     @ValidTimeZone
     @JsonDeserialize(using = TrimStringDeserializer.class)
     private String timeZone;
+
+    private Boolean deleted;
 }

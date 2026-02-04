@@ -1,6 +1,5 @@
 package com.alekseyruban.timemanagerapp.activity_service.entity;
 
-import com.alekseyruban.timemanagerapp.activity_service.DTO.sync.VersionedSyncObject;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

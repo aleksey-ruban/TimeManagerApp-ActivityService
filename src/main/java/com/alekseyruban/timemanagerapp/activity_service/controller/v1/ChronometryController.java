@@ -1,6 +1,6 @@
 package com.alekseyruban.timemanagerapp.activity_service.controller.v1;
 
-import com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry.CancelChronometryDto;
+import com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry.DeleteChronometryDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry.ChronometryDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry.CreateChronometryDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry.FinishChronometryDto;
@@ -44,11 +44,11 @@ public class ChronometryController {
     }
 
     @DeleteMapping()
-    public ResponseEntity<Void> cancelChronometry(
+    public ResponseEntity<Void> deleteChronometry(
             @RequestHeader("X-User-Id") Long userId,
-            @Valid @RequestBody CancelChronometryDto dto
+            @Valid @RequestBody DeleteChronometryDto dto
     ) {
-        chronometrySnapshotOnlineService.cancelChronometry(userId, dto);
+        chronometrySnapshotOnlineService.deleteChronometry(userId, dto);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

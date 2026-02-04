@@ -1,6 +1,5 @@
 package com.alekseyruban.timemanagerapp.activity_service.entity;
 
-import com.alekseyruban.timemanagerapp.activity_service.DTO.sync.VersionedSyncObject;
 import com.alekseyruban.timemanagerapp.activity_service.utils.ActivityColor;
 import jakarta.persistence.*;
 import lombok.*;

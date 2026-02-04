@@ -24,6 +24,9 @@ public class ChronometrySnapshot {
     private User user;
 
     @Column(nullable = false)
+    private Long lastModifiedVersion;
+
+    @Column(nullable = false)
     private LocalDate startDate;
 
     @Column(nullable = false)
@@ -39,4 +42,11 @@ public class ChronometrySnapshot {
     @Builder.Default
     @OneToMany(mappedBy = "chronometry", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ActivityRecordSnapshot> activityRecords = new ArrayList<>();
+
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

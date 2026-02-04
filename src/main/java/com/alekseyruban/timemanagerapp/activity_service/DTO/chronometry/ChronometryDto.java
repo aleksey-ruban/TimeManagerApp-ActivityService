@@ -18,6 +18,8 @@ public class ChronometryDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private String timeZone;
+    private Long lastModifiedVersion;
+    private Boolean deleted;
     private List<CategorySnapshotDto> categorySnapshotList;
     private List<ActivitySnapshotDto> activitySnapshotList;
     private List<ActivityVariationSnapshotDto> activityVariationSnapshotList;
@@ -29,6 +31,8 @@ public class ChronometryDto {
                 .startDate(chronometry.getStartDate())
                 .endDate(chronometry.getEndDate())
                 .timeZone(chronometry.getTimeZone())
+                .lastModifiedVersion(chronometry.getLastModifiedVersion())
+                .deleted(chronometry.getDeleted())
                 .build();
     }
 }

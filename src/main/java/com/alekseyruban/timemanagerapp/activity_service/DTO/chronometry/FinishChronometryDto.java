@@ -27,4 +27,6 @@ public class FinishChronometryDto {
 
     @NotNull
     private Long snapshotVersion;
+
+    private Boolean deleted;
 }
