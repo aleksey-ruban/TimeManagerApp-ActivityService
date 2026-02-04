@@ -21,7 +21,7 @@ import java.util.*;
 
 @Service
 @AllArgsConstructor
-public class ChronometrySnapshotOnlineService {
+public class ChronometrySnapshotOfflineService {
 
     private final ChronometrySnapshotRepository chronometrySnapshotRepository;
     private final ActivityRecordSnapshotRepository activityRecordSnapshotRepository;
@@ -44,7 +44,7 @@ public class ChronometrySnapshotOnlineService {
 
         List<ChronometrySnapshot> chronometrySnapshotList = chronometrySnapshotRepository.findByUser_DomainIdAndFinishedFalseAndDeletedFalse(userDomainId);
         if (!chronometrySnapshotList.isEmpty()) {
-            throw exceptionFactory.chronometryAlreadyExistsException();
+            return chronometrySnapshotList.getFirst();
         }
 
         LocalDate startDate = resolveLocalStartDate(dto.getCreateTime(), dto.getTimeZone());
@@ -151,26 +151,20 @@ public class ChronometrySnapshotOnlineService {
         for (ActivityRecord ar : activityRecords) {
             Activity activity = ar.getActivity();
             ActivityVariation variation = ar.getVariation();
-            Long variationId = variation != null ? variation.getId() : null;
             Category category = activity.getCategory();
 
-            CategorySnapshot categorySnapshot;
-            if (category != null) {
-                categorySnapshot = categoriesSnapshotCache.computeIfAbsent(
-                        category.getId(),
-                        id -> {
-                            CategorySnapshot cs = new CategorySnapshot();
-                            String name = resolveBaseName(category, Locale.fromCode(lang));
-                            cs.setBaseName(name);
-                            return cs;
-                        }
-                );
-            } else {
-                categorySnapshot = null;
-            }
+            CategorySnapshot categorySnapshot = categoriesSnapshotCache.computeIfAbsent(
+                    category.getId(),
+                    id -> {
+                        CategorySnapshot cs = new CategorySnapshot();
+                        String name = resolveBaseName(category, com.alekseyruban.timemanagerapp.activity_service.utils.Locale.fromCode(lang));
+                        cs.setBaseName(name);
+                        return cs;
+                    }
+            );
 
             for (ActivityVariation av : activity.getVariations()) {
-                if (Objects.equals(variationId, av.getId())) {
+                if (Objects.equals(ar.getVariation().getId(), av.getId())) {
                     activityVariationSnapshotCache.computeIfAbsent(
                             activity.getId(),
                             id -> new HashMap<>()
@@ -186,21 +180,13 @@ public class ChronometrySnapshotOnlineService {
                     activity.getId(),
                     id -> ActivitySnapshot.from(activity, categorySnapshot)
             );
-            ActivityVariationSnapshot activityVariationSnapshot;
-            if (variationId != null) {
-                activityVariationSnapshot = activityVariationSnapshotCache.get(activity.getId()).get(variationId);
-            } else {
-                activityVariationSnapshot = null;
-            }
-            if (variationId != null) {
-                activitySnapshot.getVariations().add(activityVariationSnapshot);
-                activityVariationSnapshot.setActivity(activitySnapshot);
-            }
+            activitySnapshot.getVariations().add(activityVariationSnapshotCache.get(activity.getId()).get(ar.getVariation().getId()));
+            activityVariationSnapshotCache.get(activity.getId()).get(ar.getVariation().getId()).setActivity(activitySnapshot);
 
             ActivityRecordSnapshot recordSnapshot = ActivityRecordSnapshot.from(
                     ar,
                     activitySnapshot,
-                    activityVariationSnapshot,
+                    activityVariationSnapshotCache.get(activity.getId()).get(variation.getId()),
                     chronometry
             );
             clampRecord(recordSnapshot, fromInstant, toInstant);
@@ -214,6 +200,7 @@ public class ChronometrySnapshotOnlineService {
 
         chronometry.setFinished(true);
         chronometry.setLastModifiedVersion(newSnapshotVersion);
+        chronometry.setDeleted(dto.getDeleted());
         chronometry.getActivityRecords().addAll(activityRecordsSnapshots);
         chronometry = chronometrySnapshotRepository.save(chronometry);
 
@@ -301,117 +288,5 @@ public class ChronometrySnapshotOnlineService {
             record.setEndedAt(end);
         }
     }
-
-    @RetryOptimisticLock
-    @Transactional
-    public ChronometryAnalyticsDto getChronometryForAnalytics(GetChronometryDto dto) {
-
-        ChronometrySnapshot chronometry = chronometrySnapshotRepository.findById(dto.getId())
-                .orElseThrow(exceptionFactory::chronometryNotFoundException);
-
-        List<ActivityRecordSnapshot> activityRecords = chronometry.getActivityRecords();
-
-        Set<ActivitySnapshot> activitiesSnapshotCache = new HashSet<>();
-        Set<ActivityVariationSnapshot> activityVariationSnapshotCache = new HashSet<>();
-        Set<CategorySnapshot> categoriesSnapshotCache = new HashSet<>();
-
-        for (ActivityRecordSnapshot ar : activityRecords) {
-            ActivitySnapshot activity = ar.getActivity();
-            ActivityVariationSnapshot variation = ar.getVariation();
-            CategorySnapshot category = activity.getCategory();
-
-            if (category != null) {
-                categoriesSnapshotCache.add(category);
-            }
-
-            if (variation != null) {
-                activityVariationSnapshotCache.add(variation);
-            }
-
-            activitiesSnapshotCache.add(activity);
-        }
-
-        ChronometryAnalyticsDto chronometryDto = ChronometryAnalyticsDto.fromChronometry(chronometry);
-        chronometryDto.setCategorySnapshotList(
-                categoriesSnapshotCache.stream()
-                        .map(CategorySnapshotDto::fromCategorySnapshot)
-                        .toList()
-        );
-        chronometryDto.setActivitySnapshotList(
-                activitiesSnapshotCache.stream()
-                        .map(ActivitySnapshotDto::fromActivitySnapshot)
-                        .toList()
-        );
-        chronometryDto.setActivityVariationSnapshotList(
-                activityVariationSnapshotCache.stream()
-                        .map(ActivityVariationSnapshotDto::fromActivityVariation)
-                        .toList()
-        );
-        chronometryDto.setActivityRecordSnapshotList(
-                activityRecords.stream()
-                        .map(ActivityRecordSnapshotDto::fromActivityRecordSnapshot)
-                        .toList()
-        );
-
-        return chronometryDto;
-    }
-
-    @RetryOptimisticLock
-    @Transactional
-    public ChronometryDto getChronometry(Long chronometryId) {
-
-        ChronometrySnapshot chronometry = chronometrySnapshotRepository.findById(chronometryId)
-                .orElseThrow(exceptionFactory::chronometryNotFoundException);
-
-        List<ActivityRecordSnapshot> activityRecords = chronometry.getActivityRecords();
-
-        Set<ActivitySnapshot> activitiesSnapshotCache = new HashSet<>();
-        Set<ActivityVariationSnapshot> activityVariationSnapshotCache = new HashSet<>();
-        Set<CategorySnapshot> categoriesSnapshotCache = new HashSet<>();
-
-        if (chronometry.getFinished()) {
-            for (ActivityRecordSnapshot ar : activityRecords) {
-                ActivitySnapshot activity = ar.getActivity();
-                ActivityVariationSnapshot variation = ar.getVariation();
-                CategorySnapshot category = activity.getCategory();
-
-                if (category != null) {
-                    categoriesSnapshotCache.add(category);
-                }
-
-                if (variation != null) {
-                    activityVariationSnapshotCache.add(variation);
-                }
-
-                activitiesSnapshotCache.add(activity);
-            }
-        }
-
-        ChronometryDto chronometryDto = ChronometryDto.fromChronometry(chronometry);
-
-        if (chronometry.getFinished()) {
-            chronometryDto.setCategorySnapshotList(
-                    categoriesSnapshotCache.stream()
-                            .map(CategorySnapshotDto::fromCategorySnapshot)
-                            .toList()
-            );
-            chronometryDto.setActivitySnapshotList(
-                    activitiesSnapshotCache.stream()
-                            .map(ActivitySnapshotDto::fromActivitySnapshot)
-                            .toList()
-            );
-            chronometryDto.setActivityVariationSnapshotList(
-                    activityVariationSnapshotCache.stream()
-                            .map(ActivityVariationSnapshotDto::fromActivityVariation)
-                            .toList()
-            );
-            chronometryDto.setActivityRecordSnapshotList(
-                    activityRecords.stream()
-                            .map(ActivityRecordSnapshotDto::fromActivityRecordSnapshot)
-                            .toList()
-            );
-        }
-
-        return chronometryDto;
-    }
 }
+
