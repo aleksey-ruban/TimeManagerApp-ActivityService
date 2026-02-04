@@ -148,4 +148,12 @@ public class ExceptionFactory {
                 "Too early to finish chronometry"
         );
     }
+
+    public ApiException badSyncPullParams() {
+        return new ApiException(
+                HttpStatus.BAD_REQUEST,
+                ErrorCode.BAD_PARAMS,
+                "Cursor required or batchSize with snapshotVersion required"
+        );
+    }
 }
