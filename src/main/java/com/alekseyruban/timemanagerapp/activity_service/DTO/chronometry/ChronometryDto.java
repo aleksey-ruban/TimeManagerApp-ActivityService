@@ -1,19 +1,18 @@
 package com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry;
 
+import com.alekseyruban.timemanagerapp.activity_service.DTO.sync.VersionedSyncObject;
 import com.alekseyruban.timemanagerapp.activity_service.entity.ChronometrySnapshot;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
-import java.beans.ConstructorProperties;
 import java.time.LocalDate;
 import java.util.List;
 
 @Data
 @Builder
 @AllArgsConstructor
-public class ChronometryDto {
+public class ChronometryDto implements VersionedSyncObject {
     private Long id;
     private LocalDate startDate;
     private LocalDate endDate;

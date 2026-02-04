@@ -1,5 +1,6 @@
 package com.alekseyruban.timemanagerapp.activity_service.DTO.activity;
 
+import com.alekseyruban.timemanagerapp.activity_service.DTO.sync.VersionedSyncObject;
 import com.alekseyruban.timemanagerapp.activity_service.entity.Activity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,7 +9,8 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class ActivityDto {
+public class ActivityDto implements VersionedSyncObject {
+
     private Long id;
 
     private Long lastModifiedVersion;

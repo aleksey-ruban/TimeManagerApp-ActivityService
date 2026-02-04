@@ -1,15 +1,16 @@
 package com.alekseyruban.timemanagerapp.activity_service.DTO.activityRecord;
 
+import com.alekseyruban.timemanagerapp.activity_service.DTO.sync.VersionedSyncObject;
 import com.alekseyruban.timemanagerapp.activity_service.entity.ActivityRecord;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
 
 @Data
 @AllArgsConstructor
-public class ActivityRecordDto {
+public class ActivityRecordDto implements VersionedSyncObject {
+
     private Long id;
 
     private Long lastModifiedVersion;
