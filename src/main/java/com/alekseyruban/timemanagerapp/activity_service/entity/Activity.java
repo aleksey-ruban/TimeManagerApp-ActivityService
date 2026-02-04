@@ -1,5 +1,6 @@
 package com.alekseyruban.timemanagerapp.activity_service.entity;
 
+import com.alekseyruban.timemanagerapp.activity_service.DTO.sync.VersionedSyncObject;
 import com.alekseyruban.timemanagerapp.activity_service.utils.ActivityColor;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,7 +22,7 @@ public class Activity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_domain_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(nullable = false)

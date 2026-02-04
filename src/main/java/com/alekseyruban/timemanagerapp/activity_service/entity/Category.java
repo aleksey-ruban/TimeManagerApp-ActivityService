@@ -1,5 +1,6 @@
 package com.alekseyruban.timemanagerapp.activity_service.entity;
 
+import com.alekseyruban.timemanagerapp.activity_service.DTO.sync.VersionedSyncObject;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -20,7 +21,7 @@ public class Category {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_domain_id")
+    @JoinColumn(name = "user_id")
     private User user;
 
     @Column(nullable = false)
