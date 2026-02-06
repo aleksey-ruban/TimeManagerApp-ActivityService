@@ -11,7 +11,6 @@ import java.util.Map;
 @NoArgsConstructor
 public class CachedResponse {
     private int status;
-    private String body;
+    private byte[] body;
     private Map<String, String> headers;
-    private String bodyHash;
 }
