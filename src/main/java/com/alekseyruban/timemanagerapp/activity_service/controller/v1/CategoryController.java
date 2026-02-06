@@ -7,6 +7,7 @@ import com.alekseyruban.timemanagerapp.activity_service.DTO.category.UpdateCateg
 import com.alekseyruban.timemanagerapp.activity_service.DTO.response.ApiResponse;
 import com.alekseyruban.timemanagerapp.activity_service.entity.Category;
 import com.alekseyruban.timemanagerapp.activity_service.service.CategoryOnlineService;
+import com.alekseyruban.timemanagerapp.activity_service.utils.idempotency.Idempotent;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ public class CategoryController {
     private final CategoryOnlineService categoryOnlineService;
 
     @PostMapping
+    @Idempotent
     public ResponseEntity<ApiResponse<CategoryDto>> createUserCategory(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody CreateCategoryDto dto
@@ -33,6 +35,7 @@ public class CategoryController {
     }
 
     @PatchMapping
+    @Idempotent
     public ResponseEntity<ApiResponse<CategoryDto>> updateUserCategory(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody UpdateCategoryDto dto

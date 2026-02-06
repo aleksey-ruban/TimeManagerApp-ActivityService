@@ -7,13 +7,12 @@ import com.alekseyruban.timemanagerapp.activity_service.DTO.activity.UpdateActiv
 import com.alekseyruban.timemanagerapp.activity_service.DTO.response.ApiResponse;
 import com.alekseyruban.timemanagerapp.activity_service.entity.Activity;
 import com.alekseyruban.timemanagerapp.activity_service.service.ActivityOnlineService;
+import com.alekseyruban.timemanagerapp.activity_service.utils.idempotency.Idempotent;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +22,7 @@ public class ActivityController {
     private final ActivityOnlineService activityOnlineService;
 
     @PostMapping
+    @Idempotent
     public ResponseEntity<ApiResponse<ActivityDto>> createUserActivity(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody CreateActivityDto dto
@@ -35,6 +35,7 @@ public class ActivityController {
     }
 
     @PatchMapping
+    @Idempotent
     public ResponseEntity<ApiResponse<ActivityDto>> updateActivity(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody UpdateActivityDto dto

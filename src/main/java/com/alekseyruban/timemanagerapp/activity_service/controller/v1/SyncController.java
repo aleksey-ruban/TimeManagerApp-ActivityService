@@ -6,6 +6,7 @@ import com.alekseyruban.timemanagerapp.activity_service.DTO.sync.pull.SyncPullRe
 import com.alekseyruban.timemanagerapp.activity_service.DTO.sync.push.SyncPushRequestDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.sync.push.SyncPushResponseDto;
 import com.alekseyruban.timemanagerapp.activity_service.service.sync.SyncService;
+import com.alekseyruban.timemanagerapp.activity_service.utils.idempotency.Idempotent;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,7 @@ public class SyncController {
     }
 
     @PostMapping("/push")
+    @Idempotent
     public ResponseEntity<ApiResponse<SyncPushResponseDto>> push(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody SyncPushRequestDto dto

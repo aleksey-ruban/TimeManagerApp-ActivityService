@@ -7,6 +7,7 @@ import com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry.FinishCh
 import com.alekseyruban.timemanagerapp.activity_service.DTO.response.ApiResponse;
 import com.alekseyruban.timemanagerapp.activity_service.entity.ChronometrySnapshot;
 import com.alekseyruban.timemanagerapp.activity_service.service.ChronometrySnapshotOnlineService;
+import com.alekseyruban.timemanagerapp.activity_service.utils.idempotency.Idempotent;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ public class ChronometryController {
     private final ChronometrySnapshotOnlineService chronometrySnapshotOnlineService;
 
     @PostMapping
+    @Idempotent
     public ResponseEntity<ApiResponse<ChronometryDto>> createChronometry(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody CreateChronometryDto dto
@@ -33,6 +35,7 @@ public class ChronometryController {
     }
 
     @PostMapping("/finish")
+    @Idempotent
     public ResponseEntity<ApiResponse<ChronometryDto>> finishChronometry(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody FinishChronometryDto dto

@@ -7,6 +7,7 @@ import com.alekseyruban.timemanagerapp.activity_service.DTO.activityRecord.Updat
 import com.alekseyruban.timemanagerapp.activity_service.DTO.response.ApiResponse;
 import com.alekseyruban.timemanagerapp.activity_service.entity.ActivityRecord;
 import com.alekseyruban.timemanagerapp.activity_service.service.ActivityRecordOnlineService;
+import com.alekseyruban.timemanagerapp.activity_service.utils.idempotency.Idempotent;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ public class ActivityRecordController {
     private final ActivityRecordOnlineService activityRecordOnlineService;
 
     @PostMapping
+    @Idempotent
     public ResponseEntity<ApiResponse<ActivityRecordDto>> createRecord(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody CreateActivityRecordDto dto
@@ -33,6 +35,7 @@ public class ActivityRecordController {
     }
 
     @PatchMapping
+    @Idempotent
     public ResponseEntity<ApiResponse<ActivityRecordDto>> updateRecord(
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody UpdateActivityRecordDto dto
