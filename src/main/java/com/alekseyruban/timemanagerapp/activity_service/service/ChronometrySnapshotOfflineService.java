@@ -151,37 +151,48 @@ public class ChronometrySnapshotOfflineService {
         for (ActivityRecord ar : activityRecords) {
             Activity activity = ar.getActivity();
             ActivityVariation variation = ar.getVariation();
+            Long variationId = variation != null ? variation.getId() : null;
             Category category = activity.getCategory();
 
-            CategorySnapshot categorySnapshot = categoriesSnapshotCache.computeIfAbsent(
-                    category.getId(),
-                    id -> {
-                        CategorySnapshot cs = new CategorySnapshot();
-                        String name = resolveBaseName(category, com.alekseyruban.timemanagerapp.activity_service.utils.Locale.fromCode(lang));
-                        cs.setBaseName(name);
-                        return cs;
-                    }
-            );
-
-            for (ActivityVariation av : activity.getVariations()) {
-                if (Objects.equals(ar.getVariation().getId(), av.getId())) {
-                    activityVariationSnapshotCache.computeIfAbsent(
-                            activity.getId(),
-                            id -> new HashMap<>()
-                    );
-                    ActivityVariationSnapshot vs = ActivityVariationSnapshot.builder()
-                            .value(av.getValue())
-                            .build();
-                    activityVariationSnapshotCache.get(activity.getId()).computeIfAbsent(av.getId(), id -> vs);
-                }
+            CategorySnapshot categorySnapshot;
+            if (category != null) {
+                categorySnapshot = categoriesSnapshotCache.computeIfAbsent(
+                        category.getId(),
+                        id -> {
+                            CategorySnapshot cs = new CategorySnapshot();
+                            String name = resolveBaseName(category, Locale.fromCode(lang));
+                            cs.setBaseName(name);
+                            cs.setGlobalCategoryId(category.getId());
+                            return cs;
+                        }
+                );
+            } else {
+                categorySnapshot = null;
             }
 
             ActivitySnapshot activitySnapshot = activitiesSnapshotCache.computeIfAbsent(
                     activity.getId(),
                     id -> ActivitySnapshot.from(activity, categorySnapshot)
             );
-            activitySnapshot.getVariations().add(activityVariationSnapshotCache.get(activity.getId()).get(ar.getVariation().getId()));
-            activityVariationSnapshotCache.get(activity.getId()).get(ar.getVariation().getId()).setActivity(activitySnapshot);
+
+            ActivityVariationSnapshot activityVariationSnapshot = null;
+            for (ActivityVariation av : activity.getVariations()) {
+                if (Objects.equals(ar.getVariation().getId(), av.getId())) {
+                    activityVariationSnapshotCache.computeIfAbsent(
+                            activity.getId(),
+                            id -> new HashMap<>()
+                    );
+                    activityVariationSnapshot = ActivityVariationSnapshot.builder()
+                            .value(av.getValue())
+                            .globalVariationId(av.getId())
+                            .build();
+                    ActivityVariationSnapshot finalActivityVariationSnapshot = activityVariationSnapshot;
+                    activityVariationSnapshotCache.get(activity.getId()).computeIfAbsent(av.getId(), id -> finalActivityVariationSnapshot);
+
+                    activitySnapshot.getVariations().add(activityVariationSnapshot);
+                    activityVariationSnapshot.setActivity(activitySnapshot);
+                }
+            }
 
             ActivityRecordSnapshot recordSnapshot = ActivityRecordSnapshot.from(
                     ar,

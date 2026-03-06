@@ -20,6 +20,8 @@ public class ActivitySnapshot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long globalActivityId;
+
     @Column(nullable = false)
     private String name;
 
@@ -41,6 +43,7 @@ public class ActivitySnapshot {
 
     public static ActivitySnapshot from(Activity source, CategorySnapshot categorySnapshot) {
         ActivitySnapshot snap = ActivitySnapshot.builder()
+                .globalActivityId(source.getId())
                 .name(source.getName())
                 .category(categorySnapshot)
                 .icon(source.getIcon())

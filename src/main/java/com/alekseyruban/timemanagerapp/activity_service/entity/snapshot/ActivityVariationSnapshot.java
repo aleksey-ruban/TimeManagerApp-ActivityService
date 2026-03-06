@@ -1,6 +1,5 @@
 package com.alekseyruban.timemanagerapp.activity_service.entity.snapshot;
 
-import com.alekseyruban.timemanagerapp.activity_service.entity.Activity;
 import com.alekseyruban.timemanagerapp.activity_service.entity.ActivityVariation;
 import jakarta.persistence.*;
 import lombok.*;
@@ -19,6 +18,8 @@ public class ActivityVariationSnapshot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long globalVariationId;
+
     @Column(nullable = false)
     private String value;
 
@@ -31,6 +32,7 @@ public class ActivityVariationSnapshot {
 
     public static ActivityVariationSnapshot from(ActivityVariation source, ActivitySnapshot activitySnapshot) {
         return ActivityVariationSnapshot.builder()
+                .globalVariationId(source.getId())
                 .value(source.getValue())
                 .activity(activitySnapshot)
                 .build();

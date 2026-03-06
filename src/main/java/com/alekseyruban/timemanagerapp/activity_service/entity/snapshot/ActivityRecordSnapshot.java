@@ -1,8 +1,6 @@
 package com.alekseyruban.timemanagerapp.activity_service.entity.snapshot;
 
-import com.alekseyruban.timemanagerapp.activity_service.entity.Activity;
 import com.alekseyruban.timemanagerapp.activity_service.entity.ActivityRecord;
-import com.alekseyruban.timemanagerapp.activity_service.entity.ActivityVariation;
 import com.alekseyruban.timemanagerapp.activity_service.entity.ChronometrySnapshot;
 import jakarta.persistence.*;
 import lombok.*;
@@ -19,6 +17,8 @@ public class ActivityRecordSnapshot {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private Long globalActivityRecordId;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "activity_id", updatable = false)
@@ -48,6 +48,7 @@ public class ActivityRecordSnapshot {
             ChronometrySnapshot chronometry
     ) {
         return ActivityRecordSnapshot.builder()
+                .globalActivityRecordId(source.getId())
                 .activity(activitySnapshot)
                 .variation(variationSnapshot)
                 .startedAt(source.getStartedAt())

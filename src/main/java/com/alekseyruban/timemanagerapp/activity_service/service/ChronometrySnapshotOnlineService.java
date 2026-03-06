@@ -162,6 +162,7 @@ public class ChronometrySnapshotOnlineService {
                             CategorySnapshot cs = new CategorySnapshot();
                             String name = resolveBaseName(category, Locale.fromCode(lang));
                             cs.setBaseName(name);
+                            cs.setGlobalCategoryId(category.getId());
                             return cs;
                         }
                 );
@@ -169,32 +170,28 @@ public class ChronometrySnapshotOnlineService {
                 categorySnapshot = null;
             }
 
+            ActivitySnapshot activitySnapshot = activitiesSnapshotCache.computeIfAbsent(
+                    activity.getId(),
+                    id -> ActivitySnapshot.from(activity, categorySnapshot)
+            );
+
+            ActivityVariationSnapshot activityVariationSnapshot = null;
             for (ActivityVariation av : activity.getVariations()) {
                 if (Objects.equals(variationId, av.getId())) {
                     activityVariationSnapshotCache.computeIfAbsent(
                             activity.getId(),
                             id -> new HashMap<>()
                     );
-                    ActivityVariationSnapshot vs = ActivityVariationSnapshot.builder()
+                    activityVariationSnapshot = ActivityVariationSnapshot.builder()
                             .value(av.getValue())
+                            .globalVariationId(av.getId())
                             .build();
-                    activityVariationSnapshotCache.get(activity.getId()).computeIfAbsent(av.getId(), id -> vs);
-                }
-            }
+                    ActivityVariationSnapshot finalActivityVariationSnapshot = activityVariationSnapshot;
+                    activityVariationSnapshotCache.get(activity.getId()).computeIfAbsent(av.getId(), id -> finalActivityVariationSnapshot);
 
-            ActivitySnapshot activitySnapshot = activitiesSnapshotCache.computeIfAbsent(
-                    activity.getId(),
-                    id -> ActivitySnapshot.from(activity, categorySnapshot)
-            );
-            ActivityVariationSnapshot activityVariationSnapshot;
-            if (variationId != null) {
-                activityVariationSnapshot = activityVariationSnapshotCache.get(activity.getId()).get(variationId);
-            } else {
-                activityVariationSnapshot = null;
-            }
-            if (variationId != null) {
-                activitySnapshot.getVariations().add(activityVariationSnapshot);
-                activityVariationSnapshot.setActivity(activitySnapshot);
+                    activitySnapshot.getVariations().add(activityVariationSnapshot);
+                    activityVariationSnapshot.setActivity(activitySnapshot);
+                }
             }
 
             ActivityRecordSnapshot recordSnapshot = ActivityRecordSnapshot.from(

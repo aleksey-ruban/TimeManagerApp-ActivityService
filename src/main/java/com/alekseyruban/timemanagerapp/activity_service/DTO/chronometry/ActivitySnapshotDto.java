@@ -1,6 +1,7 @@
 package com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry;
 
 import com.alekseyruban.timemanagerapp.activity_service.entity.snapshot.ActivitySnapshot;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -8,6 +9,8 @@ import lombok.Data;
 @AllArgsConstructor
 public class ActivitySnapshotDto {
     private Long id;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Long globalActivityId;
     private String name;
     private Long categorySnapshotId;
     private String icon;
@@ -18,6 +21,7 @@ public class ActivitySnapshotDto {
     ) {
         return new ActivitySnapshotDto(
                 activitySnapshot.getId(),
+                activitySnapshot.getGlobalActivityId(),
                 activitySnapshot.getName(),
                 activitySnapshot.getCategory() != null ? activitySnapshot.getCategory().getId() : null,
                 activitySnapshot.getIcon().getName(),
