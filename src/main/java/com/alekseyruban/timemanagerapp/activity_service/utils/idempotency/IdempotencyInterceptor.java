@@ -5,12 +5,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,8 +43,10 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
 
         String key = request.getHeader(IDEMPOTENCY_HEADER);
         if (key == null || key.isBlank()) {
-            response.sendError(400, "Missing Idempotency-Key header");
-            return false;
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Missing Idempotency-Key header"
+            );
         }
 
         String redisKey = buildRedisKey(request, key);
