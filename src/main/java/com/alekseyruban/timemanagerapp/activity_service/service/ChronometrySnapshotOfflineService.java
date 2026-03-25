@@ -159,10 +159,9 @@ public class ChronometrySnapshotOfflineService {
                 categorySnapshot = categoriesSnapshotCache.computeIfAbsent(
                         category.getId(),
                         id -> {
-                            CategorySnapshot cs = new CategorySnapshot();
+                            CategorySnapshot cs = CategorySnapshot.from(category);
                             String name = resolveBaseName(category, Locale.fromCode(lang));
                             cs.setBaseName(name);
-                            cs.setGlobalCategoryId(category.getId());
                             return cs;
                         }
                 );

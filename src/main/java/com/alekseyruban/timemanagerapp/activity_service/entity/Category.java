@@ -32,6 +32,9 @@ public class Category {
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CategoryLocale> locales = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
+    private CategoryCode code;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
