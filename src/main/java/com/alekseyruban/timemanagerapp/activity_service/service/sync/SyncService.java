@@ -73,7 +73,7 @@ public class SyncService {
         Long fromSnapshot = cursor.getSnapshotVersion();
         Long actualSnapshotVersion = user.getSnapshotVersion();
         int batchSize = cursor.getBatchSize();
-        Pageable pageable = PageRequest.of(0, batchSize);
+        Pageable pageable = PageRequest.of(0, batchSize + 10);
 
         List<SyncObjectDto> objects = new ArrayList<>();
 
