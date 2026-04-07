@@ -39,21 +39,21 @@ public class CategorySyncHandler implements SyncHandler {
                 case CREATE -> {
                     CreateCategoryDto dto = objectMapper.convertValue(payload, CreateCategoryDto.class);
                     Category category = service.createUserCategory(userDomainId, dto);
-                    yield SyncResult.ok(category.getId());
+                    yield SyncResult.ok(category.getId(), category.getLastModifiedVersion());
                 }
 
                 case UPDATE -> {
                     UpdateCategoryDto dto = objectMapper.convertValue(payload, UpdateCategoryDto.class);
                     serverId = dto.getId();
-                    service.updateUserCategory(userDomainId, dto);
-                    yield SyncResult.ok(dto.getId());
+                    Category category = service.updateUserCategory(userDomainId, dto);
+                    yield SyncResult.ok(dto.getId(), category.getLastModifiedVersion());
                 }
 
                 case DELETE -> {
                     DeleteCategoryDto dto = objectMapper.convertValue(payload, DeleteCategoryDto.class);
                     serverId = dto.getId();
-                    service.deleteUserCategory(userDomainId, dto);
-                    yield SyncResult.ok(dto.getId());
+                    Category category = service.deleteUserCategory(userDomainId, dto);
+                    yield SyncResult.ok(dto.getId(), category.getLastModifiedVersion());
                 }
             };
         } catch (Exception e) {

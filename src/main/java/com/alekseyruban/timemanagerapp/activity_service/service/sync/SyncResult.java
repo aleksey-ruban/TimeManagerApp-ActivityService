@@ -10,18 +10,19 @@ public class SyncResult {
 
     private Long serverId;
     private SyncStatus status;
+    private Long lastModifiedVersion;
     private String errorCode;
     private String errorMessage;
 
-    public static SyncResult ok(Long serverId) {
-        return new SyncResult(serverId, SyncStatus.OK, null, null);
+    public static SyncResult ok(Long serverId, Long lastModifiedVersion) {
+        return new SyncResult(serverId, SyncStatus.OK, lastModifiedVersion, null, null);
     }
 
     public static SyncResult error(Long serverId, String code, String message) {
-        return new SyncResult(serverId, SyncStatus.ERROR, code, message);
+        return new SyncResult(serverId, SyncStatus.ERROR, null, code, message);
     }
 
     public static SyncResult error(String code, String message) {
-        return new SyncResult(null, SyncStatus.ERROR, code, message);
+        return new SyncResult(null, SyncStatus.ERROR, null, code, message);
     }
 }

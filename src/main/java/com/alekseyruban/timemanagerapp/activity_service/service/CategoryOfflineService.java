@@ -124,7 +124,7 @@ public class CategoryOfflineService {
 
     @RetryOptimisticLock
     @Transactional
-    public void deleteUserCategory(Long userDomainId, DeleteCategoryDto dto) {
+    public Category deleteUserCategory(Long userDomainId, DeleteCategoryDto dto) {
         User user = userRepository.findByDomainId(userDomainId)
                 .orElseThrow(exceptionFactory::userNotFountException);
 
@@ -136,7 +136,7 @@ public class CategoryOfflineService {
         }
 
         if (category.isDeleted()) {
-            return;
+            return category;
         }
 
         Long newSnapshotVersion = user.getSnapshotVersion() + 1;
@@ -155,5 +155,7 @@ public class CategoryOfflineService {
 
         categoryRepository.save(category);
         userRepository.save(user);
+
+        return category;
     }
 }

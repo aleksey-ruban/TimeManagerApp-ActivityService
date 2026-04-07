@@ -39,21 +39,21 @@ public class ActivitySyncHandler implements SyncHandler {
                 case CREATE -> {
                     CreateActivityDto dto = objectMapper.convertValue(payload, CreateActivityDto.class);
                     Activity activity = service.createActivity(userDomainId, dto);
-                    yield SyncResult.ok(activity.getId());
+                    yield SyncResult.ok(activity.getId(), activity.getLastModifiedVersion());
                 }
 
                 case UPDATE -> {
                     UpdateActivityDto dto = objectMapper.convertValue(payload, UpdateActivityDto.class);
                     serverId = dto.getId();
-                    service.updateActivity(userDomainId, dto);
-                    yield SyncResult.ok(dto.getId());
+                    Activity activity = service.updateActivity(userDomainId, dto);
+                    yield SyncResult.ok(dto.getId(), activity.getLastModifiedVersion());
                 }
 
                 case DELETE -> {
                     DeleteActivityDto dto = objectMapper.convertValue(payload, DeleteActivityDto.class);
                     serverId = dto.getId();
-                    service.deleteActivity(userDomainId, dto);
-                    yield SyncResult.ok(dto.getId());
+                    Activity activity = service.deleteActivity(userDomainId, dto);
+                    yield SyncResult.ok(dto.getId(), activity.getLastModifiedVersion());
                 }
             };
         } catch (Exception e) {

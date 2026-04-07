@@ -226,6 +226,7 @@ public class SyncService {
 
             result.setStatus(syncResult.getStatus());
             result.setServerId(syncResult.getServerId());
+            result.setLastModifiedVersion(syncResult.getLastModifiedVersion());
             result.setErrorCode(syncResult.getErrorCode());
             result.setErrorMessage(syncResult.getErrorMessage());
 

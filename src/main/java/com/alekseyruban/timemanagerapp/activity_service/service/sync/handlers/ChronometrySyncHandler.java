@@ -1,6 +1,7 @@
 package com.alekseyruban.timemanagerapp.activity_service.service.sync.handlers;
 
 import com.alekseyruban.timemanagerapp.activity_service.DTO.category.CreateCategoryDto;
+import com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry.ChronometryDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry.CreateChronometryDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry.DeleteChronometryDto;
 import com.alekseyruban.timemanagerapp.activity_service.DTO.chronometry.FinishChronometryDto;
@@ -39,21 +40,21 @@ public class ChronometrySyncHandler implements SyncHandler {
                 case CREATE -> {
                     CreateChronometryDto dto = objectMapper.convertValue(payload, CreateChronometryDto.class);
                     ChronometrySnapshot chronometry = service.createChronometry(userDomainId, dto);
-                    yield SyncResult.ok(chronometry.getId());
+                    yield SyncResult.ok(chronometry.getId(), chronometry.getLastModifiedVersion());
                 }
 
                 case UPDATE -> {
                     FinishChronometryDto dto = objectMapper.convertValue(payload, FinishChronometryDto.class);
                     serverId = dto.getId();
-                    service.finishChronometry(userDomainId, dto);
-                    yield SyncResult.ok(dto.getId());
+                    ChronometryDto chronometry = service.finishChronometry(userDomainId, dto);
+                    yield SyncResult.ok(dto.getId(), chronometry.getLastModifiedVersion());
                 }
 
                 case DELETE -> {
                     DeleteChronometryDto dto = objectMapper.convertValue(payload, DeleteChronometryDto.class);
                     serverId = dto.getId();
-                    service.deleteChronometry(userDomainId, dto);
-                    yield SyncResult.ok(dto.getId());
+                    ChronometrySnapshot chronometrySnapshot = service.deleteChronometry(userDomainId, dto);
+                    yield SyncResult.ok(dto.getId(), chronometrySnapshot.getLastModifiedVersion());
                 }
             };
         } catch (Exception e) {

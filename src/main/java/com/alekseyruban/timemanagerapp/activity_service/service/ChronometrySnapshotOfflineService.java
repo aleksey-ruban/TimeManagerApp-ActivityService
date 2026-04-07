@@ -69,7 +69,7 @@ public class ChronometrySnapshotOfflineService {
 
     @RetryOptimisticLock
     @Transactional
-    public void deleteChronometry(Long userDomainId, DeleteChronometryDto dto) {
+    public ChronometrySnapshot deleteChronometry(Long userDomainId, DeleteChronometryDto dto) {
         User user = userRepository.findByDomainId(userDomainId)
                 .orElseThrow(exceptionFactory::userNotFountException);
 
@@ -81,7 +81,7 @@ public class ChronometrySnapshotOfflineService {
         }
 
         if (chronometry.getDeleted()) {
-            return;
+            return chronometry;
         }
 
         Long newSnapshotVersion = user.getSnapshotVersion() + 1;
@@ -92,6 +92,8 @@ public class ChronometrySnapshotOfflineService {
 
         chronometrySnapshotRepository.save(chronometry);
         userRepository.save(user);
+
+        return chronometry;
     }
 
     @RetryOptimisticLock

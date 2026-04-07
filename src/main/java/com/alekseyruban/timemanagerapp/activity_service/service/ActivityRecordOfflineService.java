@@ -154,7 +154,7 @@ public class ActivityRecordOfflineService {
 
     @RetryOptimisticLock
     @Transactional
-    public void deleteActivityRecord(Long userDomainId, DeleteActivityRecordDto dto) {
+    public ActivityRecord deleteActivityRecord(Long userDomainId, DeleteActivityRecordDto dto) {
         User user = userRepository.findByDomainId(userDomainId)
                 .orElseThrow(exceptionFactory::userNotFountException);
 
@@ -166,7 +166,7 @@ public class ActivityRecordOfflineService {
         }
 
         if (record.isDeleted()) {
-            return;
+            return record;
         }
 
         Long newSnapshotVersion = user.getSnapshotVersion() + 1;
@@ -177,5 +177,7 @@ public class ActivityRecordOfflineService {
 
         user.setSnapshotVersion(newSnapshotVersion);
         userRepository.save(user);
+
+        return record;
     }
 }

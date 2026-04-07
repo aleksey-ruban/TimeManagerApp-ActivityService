@@ -17,6 +17,7 @@ public class SyncPushResponseObjectDto {
 
     private UUID localId;
     private Long serverId;
+    private Long lastModifiedVersion;
 
     private SyncStatus status;
     @JsonInclude(JsonInclude.Include.NON_NULL)
