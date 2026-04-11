@@ -18,6 +18,7 @@ public class ChronometryDto implements VersionedSyncObject {
     private LocalDate endDate;
     private String timeZone;
     private Long lastModifiedVersion;
+    private Boolean finished;
     private Boolean deleted;
     private List<CategorySnapshotDto> categorySnapshotList;
     private List<ActivitySnapshotDto> activitySnapshotList;
@@ -31,6 +32,7 @@ public class ChronometryDto implements VersionedSyncObject {
                 .endDate(chronometry.getEndDate())
                 .timeZone(chronometry.getTimeZone())
                 .lastModifiedVersion(chronometry.getLastModifiedVersion())
+                .finished(chronometry.getFinished())
                 .deleted(chronometry.getDeleted())
                 .build();
     }

@@ -178,7 +178,7 @@ public class ChronometrySnapshotOfflineService {
 
             ActivityVariationSnapshot activityVariationSnapshot = null;
             for (ActivityVariation av : activity.getVariations()) {
-                if (Objects.equals(ar.getVariation().getId(), av.getId())) {
+                if (Objects.equals(variationId, av.getId())) {
                     activityVariationSnapshotCache.computeIfAbsent(
                             activity.getId(),
                             id -> new HashMap<>()
@@ -198,7 +198,7 @@ public class ChronometrySnapshotOfflineService {
             ActivityRecordSnapshot recordSnapshot = ActivityRecordSnapshot.from(
                     ar,
                     activitySnapshot,
-                    activityVariationSnapshotCache.get(activity.getId()).get(variation.getId()),
+                    activityVariationSnapshot,
                     chronometry
             );
             clampRecord(recordSnapshot, fromInstant, toInstant);
