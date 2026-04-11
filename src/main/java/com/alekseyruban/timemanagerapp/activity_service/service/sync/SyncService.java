@@ -197,7 +197,6 @@ public class SyncService {
     }
 
     @RetryOptimisticLock
-    @Transactional
     public SyncPushResponseDto push(Long userDomainId, SyncPushRequestDto dto) {
         List<SyncPushResponseObjectDto> results = new ArrayList<>();
 
